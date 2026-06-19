@@ -110,7 +110,7 @@ const capaLinderosCatastro = L.tileLayer.wms('https://ovc.catastro.meh.es/Cartog
     layers: 'Catastro',
     format: 'image/png',
     transparent: true,
-    version: '1.3.0',
+    version: '1.1.1',
     attribution: 'Sede Electrónica del Catastro',
     maxZoom: 22,
     maxNativeZoom: 21
