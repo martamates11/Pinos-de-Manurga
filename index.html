@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Catastro · José Ángel López de Letona</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+<div class="app-container">
+    <div class="professional-header">
+        <div class="header-accent"></div>
+        <div class="header-content">
+            <div class="header-row-1">
+                <div class="title-section"><h1>Catastro <span>· Territorio</span></h1></div>
+                <div class="owner-name">José Ángel López de Letona Ortiz de Lejarazu</div>
+            </div>
+            <div class="header-row-2">
+                <div class="subtitle">Visor cartográfico · Comentarios, fotos y vídeos</div>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <button id="btnUsuario" class="btn-exportar">👤 <span id="nombreActual">Identificarse</span></button>
+                    <button id="btnVerTodas" class="btn-exportar">🗺️ Ver todas</button>
+                    <div class="dropdown-menu">
+                        <button class="dropdown-button" id="dropdownButton">📋 Parcelas <span class="dropdown-arrow">▼</span></button>
+                        <div class="dropdown-list" id="dropdownList">
+                            <div class="dropdown-header">Selecciona una parcela</div>
+                            <div class="dropdown-items" id="dropdownItems"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="map"></div>
+</div>
+
+<div id="lightbox" class="lightbox">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <div class="lightbox-content" id="lightboxContent"></div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

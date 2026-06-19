@@ -1,0 +1,19 @@
+{
+  "name": "pinos-de-manurga",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "leaflet": "^1.9.4",
+    "proj4": "^2.9.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.8"
+  }
+}

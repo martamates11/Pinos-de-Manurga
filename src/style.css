@@ -1,0 +1,80 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css");
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Montserrat', 'Segoe UI', sans-serif; background: #e9edf2; height: 100vh; overflow: hidden; }
+.app-container { display: flex; flex-direction: column; height: 100vh; width: 100%; }
+.professional-header { background: linear-gradient(135deg, #0a1c2f 0%, #122b44 100%); color: #f0f3f8; padding: 0; border-bottom: 1px solid rgba(198, 179, 120, 0.3); box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10; }
+.header-accent { height: 2px; background: linear-gradient(90deg, #c6b378, #8a7b4f, #c6b378); width: 100%; }
+.header-content { padding: 6px 12px; display: flex; flex-direction: column; gap: 4px; }
+.header-row-1 { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 5px; }
+.title-section h1 { font-size: 0.85rem; font-weight: 500; color: #ffffff; }
+.title-section h1 span { font-weight: 300; color: #d4c9a6; }
+.owner-name { font-size: 0.7rem; font-weight: 500; font-family: 'Cormorant Garamond', serif; background: linear-gradient(135deg, #e8dcc0 0%, #d4c9a6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.owner-name::before, .owner-name::after { content: "✦"; font-size: 0.6rem; color: #c6b378; -webkit-text-fill-color: #c6b378; opacity: 0.6; margin: 0 4px; }
+.header-row-2 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; }
+.subtitle { font-size: 0.55rem; color: #bbd1e8; }
+.btn-exportar { background: rgba(255,255,255,0.15); border: 1px solid rgba(198,179,120,0.4); border-radius: 20px; padding: 3px 8px; font-size: 0.55rem; cursor: pointer; color: #e8dcc0; transition: all 0.2s; }
+.btn-exportar:hover { background: rgba(255,255,255,0.25); }
+.dropdown-menu { position: relative; display: inline-block; }
+.dropdown-button { background: rgba(255,255,255,0.1); color: #e8dcc0; padding: 3px 8px; font-size: 0.6rem; border: 1px solid rgba(198,179,120,0.4); border-radius: 30px; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.dropdown-button:hover { background: rgba(255,255,255,0.2); }
+.dropdown-arrow { font-size: 0.5rem; transition: transform 0.3s; }
+.dropdown-button.open .dropdown-arrow { transform: rotate(180deg); }
+.dropdown-list { position: absolute; top: calc(100% + 5px); right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); width: 300px; max-width: 85vw; max-height: 350px; overflow-y: auto; z-index: 1000; display: none; border: 1px solid rgba(0,0,0,0.08); }
+.dropdown-list.open { display: block; }
+.dropdown-header { padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #eaeef2; font-weight: 600; color: #122b44; position: sticky; top: 0; background: white; font-size: 0.7rem; }
+.dropdown-items { padding: 5px 8px; }
+.dropdown-parcela { padding: 6px 8px; border-bottom: 1px solid #edf1f5; cursor: pointer; border-radius: 6px; margin-bottom: 2px; }
+.dropdown-parcela:hover { background: #f4f7fb; }
+.dropdown-parcela.active { background: #e8f0fe; border-left: 2px solid #c6b378; }
+.dropdown-nombre { font-weight: 700; color: #2a5298; font-size: 0.75rem; }
+.dropdown-numero { font-size: 0.55rem; color: #34a853; font-weight: 600; }
+.dropdown-ref { font-family: monospace; font-size: 0.55rem; color: #6f7e91; }
+#map { flex: 1; background: #cfdde6; z-index: 1; }
+.numero-etiqueta { background: rgba(255,255,255,0.95); color: #1e4663; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 12px; border: 1.5px solid #2a5298; box-shadow: 0 1px 4px rgba(0,0,0,0.2); text-align: center; white-space: nowrap; cursor: pointer; }
+.numero-etiqueta:hover { background: #ffffff; transform: scale(1.05); }
+.leaflet-popup-content-wrapper { border-radius: 12px; min-width: 320px; max-width: 380px; }
+.leaflet-popup-content { margin: 10px 12px; width: auto !important; max-height: 70vh; overflow-y: auto; }
+.popup-imagen { text-align: center; margin-bottom: 10px; background: #f5f5f5; border-radius: 8px; padding: 5px; cursor: zoom-in; }
+.popup-imagen img { max-width: 100%; max-height: 250px; border-radius: 6px; border: 1px solid #ddd; }
+.popup-imagen:hover { background: #e8e8e8; }
+.popup-nombre { font-size: 0.95rem; font-weight: 700; color: #122b44; border-left: 3px solid #c6b378; padding-left: 8px; font-family: 'Cormorant Garamond', serif; margin-bottom: 5px; }
+.popup-info-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; align-items: center; }
+.popup-numero { font-size: 0.7rem; font-weight: 600; color: #34a853; background: #e8f5e9; padding: 2px 8px; border-radius: 20px; display: inline-block; }
+.popup-superficie { font-size: 0.65rem; font-weight: 600; color: #c6b378; background: #1e2a3a; padding: 2px 8px; border-radius: 20px; display: inline-block; }
+.popup-ref { font-family: monospace; font-size: 0.6rem; color: #1e4663; background: #eef2f7; padding: 4px 6px; border-radius: 6px; margin-bottom: 6px; word-break: break-all; }
+.popup-coords { background: #f5f5f5; padding: 5px; border-radius: 6px; font-family: monospace; font-size: 0.55rem; color: #555; margin: 6px 0; }
+.popup-coords div { margin: 2px 0; }
+.popup-nav-button { background: #34a853; color: white; border: none; padding: 5px 8px; border-radius: 25px; font-size: 0.6rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+.zoom-icon { font-size: 0.55rem; color: #999; text-align: center; margin-top: 3px; }
+
+.publicaciones { margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 8px; }
+.publicaciones h4 { font-size: 0.65rem; color: #122b44; margin-bottom: 6px; }
+.publicacion-item { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; font-size: 0.6rem; }
+.publicacion-meta { display: flex; justify-content: space-between; color: #6f7e91; font-size: 0.55rem; margin-bottom: 3px; }
+.publicacion-meta .autor { font-weight: 700; color: #2a5298; }
+.publicacion-texto { color: #333; white-space: pre-wrap; word-break: break-word; }
+.publicacion-media img, .publicacion-media video { max-width: 100%; border-radius: 6px; margin-top: 4px; cursor: zoom-in; max-height: 160px; }
+.publicaciones-lista { max-height: 180px; overflow-y: auto; margin-bottom: 8px; }
+.form-publicar { border-top: 1px solid #eee; padding-top: 8px; }
+.form-publicar textarea { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.6rem; font-family: inherit; resize: vertical; background: #fafafa; margin-bottom: 5px; }
+.form-publicar textarea:focus { outline: none; border-color: #c6b378; background: white; }
+.form-publicar input[type="file"] { font-size: 0.55rem; margin-bottom: 5px; width: 100%; }
+.btn-guardar { background: #2a5298; color: white; border: none; padding: 5px 8px; border-radius: 20px; font-size: 0.6rem; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s; }
+.btn-guardar:hover { background: #1e3c72; }
+.btn-guardar:disabled { background: #9aa7b8; cursor: not-allowed; }
+
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(5,10,20,0.92); z-index: 5000; align-items: center; justify-content: center; }
+.lightbox.open { display: flex; }
+.lightbox-content img, .lightbox-content video { max-width: 95vw; max-height: 92vh; border-radius: 6px; }
+.lightbox-close { position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 1.2rem; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; }
+.lightbox-close:hover { background: rgba(255,255,255,0.3); }
+
+@media (max-width: 640px) {
+    .header-row-1, .header-row-2 { flex-direction: column; align-items: flex-start; }
+    .owner-name { white-space: normal; font-size: 0.65rem; }
+    .dropdown-button { width: 100%; justify-content: center; }
+    .dropdown-list { left: 50% !important; right: auto !important; transform: translateX(-50%); width: 90vw; }
+    .numero-etiqueta { font-size: 9px; padding: 1px 4px; }
+    .leaflet-popup-content-wrapper { min-width: 280px; max-width: 320px; }
+}
