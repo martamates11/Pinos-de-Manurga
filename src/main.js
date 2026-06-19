@@ -151,13 +151,41 @@ async function cargarPublicaciones(numero, contenedor) {
             <div class="publicacion-item">
                 <div class="publicacion-meta">
                     <span class="autor">${escapeHtml(item.nombre)}</span>
-                    <span>${formatoFecha(item.created_at)}</span>
+                    <span class="publicacion-meta-derecha">
+                        <span>${formatoFecha(item.created_at)}</span>
+                        <button class="btn-borrar" data-id="${item.id}" data-path="${item.archivo_path || ''}">🗑️ Eliminar</button>
+                    </span>
                 </div>
                 ${item.texto ? `<div class="publicacion-texto">${escapeHtml(item.texto)}</div>` : ''}
                 ${media}
             </div>
         `;
     }).join('');
+
+    contenedor.querySelectorAll('.btn-borrar').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const path = btn.getAttribute('data-path');
+            eliminarPublicacion(numero, id, path, contenedor);
+        });
+    });
+}
+
+async function eliminarPublicacion(numero, id, path, contenedor) {
+    if (!window.confirm('¿Seguro que quieres eliminar esta publicación?')) return;
+    if (!window.confirm('Esta acción no se puede deshacer. ¿Confirmas que quieres eliminarla definitivamente?')) return;
+
+    try {
+        if (path) {
+            await supabase.storage.from(MEDIA_BUCKET).remove([path]);
+        }
+        const { error } = await supabase.from('publicaciones').delete().eq('id', id);
+        if (error) throw error;
+        await cargarPublicaciones(numero, contenedor);
+    } catch (e) {
+        console.error(e);
+        window.alert('No se ha podido eliminar. Inténtalo de nuevo.');
+    }
 }
 
 async function publicar(numero, texto, archivo, contenedorLista, statusEl) {
