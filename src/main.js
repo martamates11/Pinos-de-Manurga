@@ -287,7 +287,11 @@ parcelas.forEach((parcela, index) => {
         color: '#ffffff',
         weight: 2.5,
         fillOpacity: 0.85
-    }).addTo(map).bindPopup(popupContent, { maxWidth: 380 });
+    }).addTo(map).bindPopup(popupContent, {
+        maxWidth: Math.min(window.innerWidth - 24, 520),
+        minWidth: Math.min(window.innerWidth - 24, 340),
+        maxHeight: Math.round(window.innerHeight * 0.75)
+    });
 
     const numeroEtiqueta = L.marker([centerLat, centerLon], {
         icon: L.divIcon({

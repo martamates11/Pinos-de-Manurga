@@ -79,5 +79,8 @@ body { font-family: 'Montserrat', 'Segoe UI', sans-serif; background: #e9edf2; h
     .dropdown-button { width: 100%; justify-content: center; }
     .dropdown-list { left: 50% !important; right: auto !important; transform: translateX(-50%); width: 90vw; }
     .numero-etiqueta { font-size: 9px; padding: 1px 4px; }
-    .leaflet-popup-content-wrapper { min-width: 0; max-width: 94vw; }
+    .leaflet-popup-content-wrapper { min-width: 0; width: 96vw; max-width: 96vw; }
+    .leaflet-popup-content { max-height: 75vh; }
+    .publicaciones-lista { max-height: 220px; }
+    .popup-imagen img { max-height: 200px; }
 }
