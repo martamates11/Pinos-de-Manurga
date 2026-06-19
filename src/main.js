@@ -87,7 +87,7 @@ function openNavigation(lat, lon, ref, nombre) {
     const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
     const destination = `${nombre} - ${ref.replace(/-/g, ' ')}`;
     if (isIOS) window.open(`https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(destination)}&dirflg=d`, '_blank');
-    else window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`, '_blank');
+    else window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`, '_blank');
 }
 window.openNavigation = openNavigation;
 
@@ -106,8 +106,22 @@ const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/se
     maxZoom: 22,
     maxNativeZoom: 19
 });
+const capaLinderosCatastro = L.tileLayer.wms('https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx', {
+    layers: 'Catastro',
+    format: 'image/png',
+    transparent: true,
+    version: '1.3.0',
+    attribution: 'Sede Electrónica del Catastro',
+    maxZoom: 22,
+    maxNativeZoom: 21
+});
+
 capaCalle.addTo(map);
-L.control.layers({ "Calle": capaCalle, "Satélite": capaSatelite }).addTo(map);
+capaLinderosCatastro.addTo(map);
+L.control.layers(
+    { "Calle": capaCalle, "Satélite": capaSatelite },
+    { "Linderos oficiales (Catastro)": capaLinderosCatastro }
+).addTo(map);
 L.control.scale({ metric: true, imperial: false }).addTo(map);
 
 const colors = { "02": "#2a5298", "03": "#2a5298" };
