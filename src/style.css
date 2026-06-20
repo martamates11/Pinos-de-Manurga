@@ -34,6 +34,7 @@ body { font-family: 'Montserrat', 'Segoe UI', sans-serif; background: #e9edf2; h
 .btn-exportar.activo { background: #0050ff; border-color: #0050ff; color: #ffffff; }
 .etiqueta-distancia { background: #0050ff; color: #ffffff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.3); transform: translate(-50%, -50%); width: auto !important; height: auto !important; }
 .punto-medicion { width: 18px; height: 18px; border-radius: 50%; background: #0050ff; border: 2px solid #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); cursor: grab; }
+.punto-ubicacion { width: 16px; height: 16px; border-radius: 50%; background: #2a5298; border: 3px solid #ffffff; box-shadow: 0 0 0 2px rgba(42,82,152,0.4), 0 1px 4px rgba(0,0,0,0.4); }
 .etiqueta-distancia-total { font-weight: 500; opacity: 0.85; }
 .numero-etiqueta { background: rgba(255,255,255,0.95); color: #1e4663; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 12px; border: 1.5px solid #2a5298; box-shadow: 0 1px 4px rgba(0,0,0,0.2); text-align: center; white-space: nowrap; cursor: pointer; }
 .numero-etiqueta:hover { background: #ffffff; transform: scale(1.05); }

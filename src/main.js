@@ -308,7 +308,15 @@ parcelas.forEach((parcela, index) => {
         });
     });
 
-    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, index });
+    const rectLindero = L.rectangle(bounds, {
+        color: '#d4af37',
+        weight: 5,
+        fillOpacity: 0,
+        opacity: 0,
+        interactive: false
+    }).addTo(map);
+
+    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, index, rectLindero, cercaLindero: false });
 
     if (!allBounds) allBounds = L.latLngBounds(bounds);
     else allBounds.extend(bounds);
@@ -468,3 +476,70 @@ map.on('click', (e) => {
     marcadoresMedicion.push(punto);
     redibujarMedicion();
 });
+
+// =========================================================================
+// Geolocalización: el lindero se pone dorado al acercarse sobre el terreno
+// =========================================================================
+const UMBRAL_CERCA_METROS = 15;
+
+function distanciaPuntoSegmento(p, a, b) {
+    const origen = a;
+    const ax = 0, ay = 0;
+    const bx = (b.lng - origen.lng) * 111320 * Math.cos(origen.lat * Math.PI / 180);
+    const by = (b.lat - origen.lat) * 110540;
+    const px = (p.lng - origen.lng) * 111320 * Math.cos(origen.lat * Math.PI / 180);
+    const py = (p.lat - origen.lat) * 110540;
+
+    const dx = bx - ax, dy = by - ay;
+    const largo2 = dx * dx + dy * dy;
+    let t = largo2 === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / largo2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    return Math.hypot(px - cx, py - cy);
+}
+
+function distanciaAlLindero(p, bounds) {
+    const [[minLat, minLng], [maxLat, maxLng]] = bounds;
+    const sw = L.latLng(minLat, minLng), se = L.latLng(minLat, maxLng);
+    const ne = L.latLng(maxLat, maxLng), nw = L.latLng(maxLat, minLng);
+    const lados = [[sw, se], [se, ne], [ne, nw], [nw, sw]];
+    return Math.min(...lados.map(([a, b]) => distanciaPuntoSegmento(p, a, b)));
+}
+
+let marcadorUbicacion = null;
+let circuloPrecision = null;
+
+function actualizarUbicacion(pos) {
+    const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+
+    if (!marcadorUbicacion) {
+        marcadorUbicacion = L.marker(latlng, {
+            icon: L.divIcon({ className: 'punto-ubicacion', iconSize: [16, 16], iconAnchor: [8, 8] }),
+            zIndexOffset: 1000,
+            interactive: false
+        }).addTo(map);
+        circuloPrecision = L.circle(latlng, { radius: pos.coords.accuracy || 0, color: '#2a5298', weight: 1, fillOpacity: 0.08, interactive: false }).addTo(map);
+    } else {
+        marcadorUbicacion.setLatLng(latlng);
+        circuloPrecision.setLatLng(latlng);
+        circuloPrecision.setRadius(pos.coords.accuracy || 0);
+    }
+
+    markers.forEach(m => {
+        const distancia = distanciaAlLindero(latlng, m.bounds);
+        const cerca = distancia <= UMBRAL_CERCA_METROS;
+        if (cerca !== m.cercaLindero) {
+            m.cercaLindero = cerca;
+            m.rectLindero.setStyle({ opacity: cerca ? 0.95 : 0 });
+            if (cerca) m.rectLindero.bringToFront();
+        }
+    });
+}
+
+if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(actualizarUbicacion, () => {}, {
+        enableHighAccuracy: true,
+        maximumAge: 2000,
+        timeout: 15000
+    });
+}
