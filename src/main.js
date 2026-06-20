@@ -474,7 +474,7 @@ map.on('click', (e) => {
 // =========================================================================
 // Geolocalización: el lindero se pone dorado al acercarse sobre el terreno
 // =========================================================================
-const UMBRAL_CERCA_METROS = 7;
+const UMBRAL_CERCA_METROS = 5;
 
 function distanciaPuntoSegmento(p, a, b) {
     const origen = a;
