@@ -106,12 +106,12 @@ const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/se
     maxZoom: 22,
     maxNativeZoom: 19
 });
-const capaLinderosCatastro = L.tileLayer.wms('https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx', {
-    layers: 'Catastro',
+const capaLinderosCatastro = L.tileLayer.wms('https://geo.araba.eus/WMS_INSPIRE_CP', {
+    layers: 'CP.CadastralParcel',
     format: 'image/png',
     transparent: true,
-    version: '1.1.1',
-    attribution: 'Sede Electrónica del Catastro',
+    version: '1.3.0',
+    attribution: 'Diputación Foral de Álava · GeoAraba',
     maxZoom: 22,
     maxNativeZoom: 21
 });
