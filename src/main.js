@@ -385,8 +385,6 @@ function formatoDistancia(metros) {
 
 function limpiarMedicion() {
     puntosMedicion = [];
-    indicePuntoArrastrado = null;
-    map.dragging.enable();
     if (lineaMedicion) { map.removeLayer(lineaMedicion); lineaMedicion = null; }
     marcadoresMedicion.forEach(m => map.removeLayer(m));
     marcadoresMedicion.length = 0;
