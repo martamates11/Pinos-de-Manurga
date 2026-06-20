@@ -385,6 +385,8 @@ function formatoDistancia(metros) {
 
 function limpiarMedicion() {
     puntosMedicion = [];
+    indicePuntoArrastrado = null;
+    map.dragging.enable();
     if (lineaMedicion) { map.removeLayer(lineaMedicion); lineaMedicion = null; }
     marcadoresMedicion.forEach(m => map.removeLayer(m));
     marcadoresMedicion.length = 0;
@@ -416,29 +418,21 @@ btnMedir.addEventListener('click', () => {
     }
 });
 
-map.on('click', (e) => {
-    if (!midiendo) return;
+function redibujarMedicion() {
+    if (lineaMedicion) { map.removeLayer(lineaMedicion); lineaMedicion = null; }
+    etiquetasMedicion.forEach(e => map.removeLayer(e));
+    etiquetasMedicion.length = 0;
 
-    puntosMedicion.push(e.latlng);
+    if (puntosMedicion.length < 2) return;
 
-    const punto = L.circleMarker(e.latlng, {
-        radius: 5,
-        color: '#0050ff',
-        fillColor: '#0050ff',
-        fillOpacity: 1,
-        weight: 2
-    }).addTo(map);
-    marcadoresMedicion.push(punto);
-
-    if (lineaMedicion) map.removeLayer(lineaMedicion);
     lineaMedicion = L.polyline(puntosMedicion, { color: '#0050ff', weight: 3, dashArray: '6 6' }).addTo(map);
 
-    if (puntosMedicion.length >= 2) {
-        const a = puntosMedicion[puntosMedicion.length - 2];
-        const b = puntosMedicion[puntosMedicion.length - 1];
+    let total = 0;
+    for (let i = 1; i < puntosMedicion.length; i++) {
+        const a = puntosMedicion[i - 1];
+        const b = puntosMedicion[i];
         const tramo = distanciaMetros(a, b);
-        let total = 0;
-        for (let i = 1; i < puntosMedicion.length; i++) total += distanciaMetros(puntosMedicion[i - 1], puntosMedicion[i]);
+        total += tramo;
 
         const midLat = (a.lat + b.lat) / 2;
         const midLng = (a.lng + b.lng) / 2;
@@ -453,4 +447,44 @@ map.on('click', (e) => {
         }).addTo(map);
         etiquetasMedicion.push(etiqueta);
     }
+}
+
+let indicePuntoArrastrado = null;
+
+map.on('mousemove', (ev) => {
+    if (indicePuntoArrastrado === null) return;
+    marcadoresMedicion[indicePuntoArrastrado].setLatLng(ev.latlng);
+    puntosMedicion[indicePuntoArrastrado] = ev.latlng;
+    redibujarMedicion();
+});
+
+map.on('mouseup', () => {
+    if (indicePuntoArrastrado !== null) {
+        indicePuntoArrastrado = null;
+        map.dragging.enable();
+    }
+});
+
+map.on('click', (e) => {
+    if (!midiendo) return;
+
+    const indice = puntosMedicion.length;
+    puntosMedicion.push(e.latlng);
+
+    const punto = L.circleMarker(e.latlng, {
+        radius: 7,
+        color: '#ffffff',
+        fillColor: '#0050ff',
+        fillOpacity: 1,
+        weight: 2
+    }).addTo(map);
+
+    punto.on('mousedown', (ev) => {
+        L.DomEvent.stopPropagation(ev);
+        map.dragging.disable();
+        indicePuntoArrastrado = indice;
+    });
+
+    marcadoresMedicion.push(punto);
+    redibujarMedicion();
 });
