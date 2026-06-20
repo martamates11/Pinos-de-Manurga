@@ -588,7 +588,10 @@ function actualizarUbicacion(pos) {
         if (cerca !== m.cercaLindero) {
             m.cercaLindero = cerca;
             m.rectLindero.setStyle({ opacity: cerca ? 0.95 : 0 });
-            if (cerca) m.rectLindero.bringToFront();
+            if (cerca) {
+                m.rectLindero.bringToFront();
+                if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+            }
         }
     });
 }
