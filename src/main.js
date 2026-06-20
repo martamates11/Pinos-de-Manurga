@@ -364,3 +364,93 @@ document.addEventListener('click', (e) => {
         dropdownButton.classList.remove('open');
     }
 });
+
+// =========================================================================
+// Herramienta de medición de distancias
+// =========================================================================
+const btnMedir = document.getElementById('btnMedir');
+let midiendo = false;
+let puntosMedicion = [];
+let lineaMedicion = null;
+const marcadoresMedicion = [];
+const etiquetasMedicion = [];
+
+function distanciaMetros(latlng1, latlng2) {
+    return map.distance(latlng1, latlng2);
+}
+
+function formatoDistancia(metros) {
+    return metros >= 1000 ? `${(metros / 1000).toFixed(2)} km` : `${metros.toFixed(1)} m`;
+}
+
+function limpiarMedicion() {
+    puntosMedicion = [];
+    if (lineaMedicion) { map.removeLayer(lineaMedicion); lineaMedicion = null; }
+    marcadoresMedicion.forEach(m => map.removeLayer(m));
+    marcadoresMedicion.length = 0;
+    etiquetasMedicion.forEach(e => map.removeLayer(e));
+    etiquetasMedicion.length = 0;
+}
+
+function activarMedicion() {
+    midiendo = true;
+    limpiarMedicion();
+    btnMedir.classList.add('activo');
+    btnMedir.textContent = '✖️ Cancelar medición';
+    map.getContainer().style.cursor = 'crosshair';
+}
+
+function desactivarMedicion() {
+    midiendo = false;
+    btnMedir.classList.remove('activo');
+    btnMedir.textContent = '📏 Medir distancia';
+    map.getContainer().style.cursor = '';
+}
+
+btnMedir.addEventListener('click', () => {
+    if (midiendo) {
+        desactivarMedicion();
+        limpiarMedicion();
+    } else {
+        activarMedicion();
+    }
+});
+
+map.on('click', (e) => {
+    if (!midiendo) return;
+
+    puntosMedicion.push(e.latlng);
+
+    const punto = L.circleMarker(e.latlng, {
+        radius: 5,
+        color: '#0050ff',
+        fillColor: '#0050ff',
+        fillOpacity: 1,
+        weight: 2
+    }).addTo(map);
+    marcadoresMedicion.push(punto);
+
+    if (lineaMedicion) map.removeLayer(lineaMedicion);
+    lineaMedicion = L.polyline(puntosMedicion, { color: '#0050ff', weight: 3, dashArray: '6 6' }).addTo(map);
+
+    if (puntosMedicion.length >= 2) {
+        const a = puntosMedicion[puntosMedicion.length - 2];
+        const b = puntosMedicion[puntosMedicion.length - 1];
+        const tramo = distanciaMetros(a, b);
+        let total = 0;
+        for (let i = 1; i < puntosMedicion.length; i++) total += distanciaMetros(puntosMedicion[i - 1], puntosMedicion[i]);
+
+        const midLat = (a.lat + b.lat) / 2;
+        const midLng = (a.lng + b.lng) / 2;
+        const etiqueta = L.marker([midLat, midLng], {
+            icon: L.divIcon({
+                className: 'etiqueta-distancia',
+                html: puntosMedicion.length === 2
+                    ? formatoDistancia(tramo)
+                    : `${formatoDistancia(tramo)} <span class="etiqueta-distancia-total">(total: ${formatoDistancia(total)})</span>`
+            }),
+            interactive: false
+        }).addTo(map);
+        etiquetasMedicion.push(etiqueta);
+    }
+});
