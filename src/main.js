@@ -2,6 +2,10 @@ import L from 'leaflet';
 import proj4 from 'proj4';
 import { supabase, MEDIA_BUCKET } from './supabaseClient.js';
 
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
 proj4.defs("EPSG:25830", "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs");
 
 const parcelas = [
@@ -564,6 +568,16 @@ cargarPoligonosReales();
 
 let marcadorUbicacion = null;
 let circuloPrecision = null;
+let flechaBrujula = null;
+let headingPendiente = null;
+
+function actualizarFlecha(heading) {
+    headingPendiente = heading;
+    if (!flechaBrujula) return;
+    const el = flechaBrujula.getElement();
+    const interior = el && el.querySelector('.flecha-interior');
+    if (interior) interior.style.transform = `rotate(${heading}deg)`;
+}
 
 function actualizarUbicacion(pos) {
     const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
@@ -575,10 +589,17 @@ function actualizarUbicacion(pos) {
             interactive: false
         }).addTo(map);
         circuloPrecision = L.circle(latlng, { radius: pos.coords.accuracy || 0, color: '#2a5298', weight: 1, fillOpacity: 0.08, interactive: false }).addTo(map);
+        flechaBrujula = L.marker(latlng, {
+            icon: L.divIcon({ className: 'flecha-brujula', html: '<div class="flecha-interior"></div>', iconSize: [28, 28], iconAnchor: [14, 14] }),
+            zIndexOffset: 1001,
+            interactive: false
+        }).addTo(map);
+        if (headingPendiente !== null) actualizarFlecha(headingPendiente);
     } else {
         marcadorUbicacion.setLatLng(latlng);
         circuloPrecision.setLatLng(latlng);
         circuloPrecision.setRadius(pos.coords.accuracy || 0);
+        flechaBrujula.setLatLng(latlng);
     }
 
     markers.forEach(m => {
@@ -603,3 +624,41 @@ if (navigator.geolocation) {
         timeout: 15000
     });
 }
+
+// =========================================================================
+// Brújula: flecha que indica hacia dónde mira el dispositivo
+// =========================================================================
+const btnBrujula = document.getElementById('btnBrujula');
+let brujulaActiva = false;
+
+function manejarOrientacion(event) {
+    let heading;
+    if (typeof event.webkitCompassHeading === 'number') {
+        heading = event.webkitCompassHeading;
+    } else if (event.alpha !== null) {
+        heading = 360 - event.alpha;
+    } else {
+        return;
+    }
+    actualizarFlecha(heading);
+}
+
+function activarEscuchaOrientacion() {
+    const soportaAbsoluto = 'ondeviceorientationabsolute' in window;
+    window.addEventListener(soportaAbsoluto ? 'deviceorientationabsolute' : 'deviceorientation', manejarOrientacion, true);
+    brujulaActiva = true;
+    btnBrujula.textContent = '✅ Brújula activa';
+}
+
+btnBrujula.addEventListener('click', () => {
+    if (brujulaActiva) return;
+
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then((resultado) => {
+            if (resultado === 'granted') activarEscuchaOrientacion();
+            else btnBrujula.textContent = '🧭 Permiso denegado';
+        }).catch(() => { btnBrujula.textContent = '🧭 Error al activar'; });
+    } else {
+        activarEscuchaOrientacion();
+    }
+});
