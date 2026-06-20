@@ -308,15 +308,7 @@ parcelas.forEach((parcela, index) => {
         });
     });
 
-    const rectLindero = L.rectangle(bounds, {
-        color: '#d4af37',
-        weight: 5,
-        fillOpacity: 0,
-        opacity: 0,
-        interactive: false
-    }).addTo(map);
-
-    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, index, rectLindero, cercaLindero: false });
+    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, index, rectLindero: null, anillo: null, cercaLindero: false });
 
     if (!allBounds) allBounds = L.latLngBounds(bounds);
     else allBounds.extend(bounds);
@@ -498,20 +490,11 @@ function distanciaPuntoSegmento(p, a, b) {
     return Math.hypot(px - cx, py - cy);
 }
 
-function anilloBbox(bounds) {
-    const [[minLat, minLng], [maxLat, maxLng]] = bounds;
-    return [
-        L.latLng(minLat, minLng), L.latLng(minLat, maxLng),
-        L.latLng(maxLat, maxLng), L.latLng(maxLat, minLng),
-        L.latLng(minLat, minLng)
-    ];
-}
-
 function distanciaAlLindero(p, m) {
-    const anillo = m.anillo || anilloBbox(m.bounds);
+    if (!m.anillo) return Infinity;
     let min = Infinity;
-    for (let i = 0; i < anillo.length - 1; i++) {
-        min = Math.min(min, distanciaPuntoSegmento(p, anillo[i], anillo[i + 1]));
+    for (let i = 0; i < m.anillo.length - 1; i++) {
+        min = Math.min(min, distanciaPuntoSegmento(p, m.anillo[i], m.anillo[i + 1]));
     }
     return min;
 }
@@ -555,7 +538,6 @@ async function cargarPoligonosReales() {
             if (!anillo) continue;
 
             m.anillo = anillo;
-            map.removeLayer(m.rectLindero);
             m.rectLindero = L.polygon(anillo, {
                 color: '#d4af37',
                 weight: 5,
@@ -590,6 +572,7 @@ function actualizarUbicacion(pos) {
     }
 
     markers.forEach(m => {
+        if (!m.rectLindero) return;
         const distancia = distanciaAlLindero(latlng, m);
         const cerca = distancia <= UMBRAL_CERCA_METROS;
         if (cerca !== m.cercaLindero) {
