@@ -4,23 +4,6 @@ import { supabase, MEDIA_BUCKET } from './supabaseClient.js';
 
 proj4.defs("EPSG:25830", "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs");
 
-// =========================================================================
-// Imágenes catastrales oficiales (referencia fija, no subidas por usuarios)
-// =========================================================================
-const imagenesParcelas = {
-    "1": "https://images2.imgbox.com/f4/77/xIeGNVPK_o.png",
-    "2": "https://images2.imgbox.com/e8/2a/bkVQtSwo_o.png",
-    "3": "https://images2.imgbox.com/c8/06/DWUx31k8_o.png",
-    "5": "https://i.imgur.com/zV2qED9.png",
-    "6": "https://images2.imgbox.com/40/82/yoZGnVO6_o.png",
-    "7": "https://images2.imgbox.com/18/31/ofcI4swk_o.png",
-    "9": "https://images2.imgbox.com/1b/5d/qWQAExPX_o.png",
-    "10": "https://images2.imgbox.com/28/41/wQISYIkz_o.png",
-    "11": "https://i.imgur.com/stX20iY.png",
-    "12": "https://images2.imgbox.com/1f/52/UmHk0MQO_o.png",
-    "13": "https://images2.imgbox.com/96/a0/7bZvegKO_o.png"
-};
-
 const parcelas = [
     { ref: "18-03-0911-00-0000-0000-LU", seccion: "03", nombre: "MURABE", numero: "1", superficie: "1.698,27", xmin: 519959.351, ymin: 4758238.643, xmax: 520183.924, ymax: 4758350.212 },
     { ref: "18-03-1782-00-0000-0000-HZ", seccion: "03", nombre: "LA DEHESA", numero: "2", superficie: "3.627,60", xmin: 519985.119, ymin: 4757738.252, xmax: 520374.441, ymax: 4757931.67 },
@@ -251,14 +234,6 @@ parcelas.forEach((parcela, index) => {
     const centerLat = (minLatLon[0] + maxLatLon[0]) / 2;
     const centerLon = (minLatLon[1] + maxLatLon[1]) / 2;
 
-    const imagenUrl = imagenesParcelas[parcela.numero] || null;
-    const imagenHtml = imagenUrl ? `
-        <div class="popup-imagen" onclick="abrirLightbox('${imagenUrl}','foto')">
-            <img src="${imagenUrl}" alt="Forma catastral de ${parcela.nombre}" />
-            <div class="zoom-icon">🔍 Haz clic para ampliar</div>
-        </div>
-    ` : '';
-
     const listaId = `lista_${parcela.numero}`;
     const textareaId = `texto_${parcela.numero}`;
     const fileId = `file_${parcela.numero}`;
@@ -267,7 +242,6 @@ parcelas.forEach((parcela, index) => {
 
     const popupContent = `
         <div class="popup-info">
-            ${imagenHtml}
             <div class="popup-nombre">${parcela.nombre}</div>
             <div class="popup-info-row">
                 <span class="popup-numero">Nº ${parcela.numero}</span>
@@ -365,9 +339,8 @@ const dropdownItems = document.getElementById('dropdownItems');
 parcelas.forEach((parcela, index) => {
     const item = document.createElement('div');
     item.className = 'dropdown-parcela';
-    const tieneImagen = imagenesParcelas[parcela.numero] ? ' 🖼️' : '';
     item.innerHTML = `
-        <div class="dropdown-nombre">${parcela.nombre}${tieneImagen}</div>
+        <div class="dropdown-nombre">${parcela.nombre}</div>
         <div class="dropdown-numero">Nº ${parcela.numero} · Sección ${parcela.seccion}</div>
         <div class="dropdown-ref">${parcela.ref}</div>
     `;
