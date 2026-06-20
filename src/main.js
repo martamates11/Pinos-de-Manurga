@@ -532,10 +532,12 @@ async function obtenerPoligonoReal(parcela) {
 }
 
 async function cargarPoligonosReales() {
+    const fallidas = [];
+
     for (const m of markers) {
         try {
             const anillo = await obtenerPoligonoReal(m.parcela);
-            if (!anillo) continue;
+            if (!anillo) { fallidas.push(m.parcela); continue; }
 
             m.anillo = anillo;
             m.rectLindero = L.polygon(anillo, {
@@ -547,8 +549,18 @@ async function cargarPoligonosReales() {
             }).addTo(map);
         } catch (e) {
             console.error(`No se pudo obtener el polígono real de la parcela ${m.parcela.nombre}`, e);
+            fallidas.push(m.parcela);
         }
     }
+
+    const total = markers.length;
+    const ok = total - fallidas.length;
+    const aviso = document.getElementById('avisoPoligonos');
+    aviso.textContent = fallidas.length === 0
+        ? `✅ Aviso de proximidad activo en las ${total} parcelas (toca para ocultar)`
+        : `⚠️ Aviso de proximidad activo en ${ok}/${total} parcelas. Sin polígono real: ${fallidas.map(p => `Nº ${p.numero}`).join(', ')} (toca para ocultar)`;
+    aviso.classList.add('visible');
+    aviso.addEventListener('click', () => aviso.classList.remove('visible'));
 }
 cargarPoligonosReales();
 
