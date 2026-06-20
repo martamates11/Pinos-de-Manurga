@@ -498,13 +498,77 @@ function distanciaPuntoSegmento(p, a, b) {
     return Math.hypot(px - cx, py - cy);
 }
 
-function distanciaAlLindero(p, bounds) {
+function anilloBbox(bounds) {
     const [[minLat, minLng], [maxLat, maxLng]] = bounds;
-    const sw = L.latLng(minLat, minLng), se = L.latLng(minLat, maxLng);
-    const ne = L.latLng(maxLat, maxLng), nw = L.latLng(maxLat, minLng);
-    const lados = [[sw, se], [se, ne], [ne, nw], [nw, sw]];
-    return Math.min(...lados.map(([a, b]) => distanciaPuntoSegmento(p, a, b)));
+    return [
+        L.latLng(minLat, minLng), L.latLng(minLat, maxLng),
+        L.latLng(maxLat, maxLng), L.latLng(maxLat, minLng),
+        L.latLng(minLat, minLng)
+    ];
 }
+
+function distanciaAlLindero(p, m) {
+    const anillo = m.anillo || anilloBbox(m.bounds);
+    let min = Infinity;
+    for (let i = 0; i < anillo.length - 1; i++) {
+        min = Math.min(min, distanciaPuntoSegmento(p, anillo[i], anillo[i + 1]));
+    }
+    return min;
+}
+
+// =========================================================================
+// Polígonos exactos de las parcelas (WFS INSPIRE de GeoAraba)
+// =========================================================================
+const WFS_CADASTRO_URL = 'https://geo.araba.eus/WFS_INSPIRE_CP';
+
+function referenciaNacional(ref) {
+    return ref.split('-').slice(0, 3).join('');
+}
+
+async function obtenerPoligonoReal(parcela) {
+    const margen = 5;
+    const bbox = `${parcela.xmin - margen},${parcela.ymin - margen},${parcela.xmax + margen},${parcela.ymax + margen},urn:ogc:def:crs:EPSG::25830`;
+    const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&BBOX=${bbox}&outputFormat=application/json`;
+
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) throw new Error('WFS no disponible');
+    const datos = await respuesta.json();
+
+    const refBuscada = referenciaNacional(parcela.ref);
+    const feature = (datos.features || []).find(f => f.properties && f.properties.nationalCadastralReference === refBuscada);
+    if (!feature) return null;
+
+    const anilloUtm = feature.geometry.type === 'Polygon'
+        ? feature.geometry.coordinates[0]
+        : feature.geometry.coordinates[0][0];
+
+    return anilloUtm.map(([x, y]) => {
+        const [lat, lon] = utmToLatLon(x, y);
+        return L.latLng(lat, lon);
+    });
+}
+
+async function cargarPoligonosReales() {
+    for (const m of markers) {
+        try {
+            const anillo = await obtenerPoligonoReal(m.parcela);
+            if (!anillo) continue;
+
+            m.anillo = anillo;
+            map.removeLayer(m.rectLindero);
+            m.rectLindero = L.polygon(anillo, {
+                color: '#d4af37',
+                weight: 5,
+                fillOpacity: 0,
+                opacity: 0,
+                interactive: false
+            }).addTo(map);
+        } catch (e) {
+            console.error(`No se pudo obtener el polígono real de la parcela ${m.parcela.nombre}`, e);
+        }
+    }
+}
+cargarPoligonosReales();
 
 let marcadorUbicacion = null;
 let circuloPrecision = null;
@@ -526,7 +590,7 @@ function actualizarUbicacion(pos) {
     }
 
     markers.forEach(m => {
-        const distancia = distanciaAlLindero(latlng, m.bounds);
+        const distancia = distanciaAlLindero(latlng, m);
         const cerca = distancia <= UMBRAL_CERCA_METROS;
         if (cerca !== m.cercaLindero) {
             m.cercaLindero = cerca;
