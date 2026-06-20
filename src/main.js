@@ -449,40 +449,20 @@ function redibujarMedicion() {
     }
 }
 
-let indicePuntoArrastrado = null;
-
-map.on('mousemove', (ev) => {
-    if (indicePuntoArrastrado === null) return;
-    marcadoresMedicion[indicePuntoArrastrado].setLatLng(ev.latlng);
-    puntosMedicion[indicePuntoArrastrado] = ev.latlng;
-    redibujarMedicion();
-});
-
-map.on('mouseup', () => {
-    if (indicePuntoArrastrado !== null) {
-        indicePuntoArrastrado = null;
-        map.dragging.enable();
-    }
-});
-
 map.on('click', (e) => {
     if (!midiendo) return;
 
     const indice = puntosMedicion.length;
     puntosMedicion.push(e.latlng);
 
-    const punto = L.circleMarker(e.latlng, {
-        radius: 7,
-        color: '#ffffff',
-        fillColor: '#0050ff',
-        fillOpacity: 1,
-        weight: 2
+    const punto = L.marker(e.latlng, {
+        icon: L.divIcon({ className: 'punto-medicion', iconSize: [18, 18], iconAnchor: [9, 9] }),
+        draggable: true
     }).addTo(map);
 
-    punto.on('mousedown', (ev) => {
-        L.DomEvent.stopPropagation(ev);
-        map.dragging.disable();
-        indicePuntoArrastrado = indice;
+    punto.on('drag', () => {
+        puntosMedicion[indice] = punto.getLatLng();
+        redibujarMedicion();
     });
 
     marcadoresMedicion.push(punto);
