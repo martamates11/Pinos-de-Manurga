@@ -579,8 +579,31 @@ function actualizarFlecha(heading) {
     if (interior) interior.style.transform = `rotate(${heading}deg)`;
 }
 
+let modoSeguir = false;
+const btnSeguir = document.getElementById('btnSeguir');
+
+btnSeguir.addEventListener('click', () => {
+    modoSeguir = !modoSeguir;
+    btnSeguir.classList.toggle('activo', modoSeguir);
+    btnSeguir.textContent = modoSeguir ? '📍 Siguiendo' : '📍 Seguirme';
+    if (modoSeguir && ultimaUbicacion) {
+        map.setView(ultimaUbicacion, Math.max(map.getZoom(), 17));
+    }
+});
+
+map.on('dragstart', () => {
+    if (modoSeguir) {
+        modoSeguir = false;
+        btnSeguir.classList.remove('activo');
+        btnSeguir.textContent = '📍 Seguirme';
+    }
+});
+
+let ultimaUbicacion = null;
+
 function actualizarUbicacion(pos) {
     const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+    ultimaUbicacion = latlng;
 
     if (!marcadorUbicacion) {
         marcadorUbicacion = L.marker(latlng, {
@@ -595,11 +618,13 @@ function actualizarUbicacion(pos) {
             interactive: false
         }).addTo(map);
         if (headingPendiente !== null) actualizarFlecha(headingPendiente);
+        if (modoSeguir) map.setView(latlng, Math.max(map.getZoom(), 17));
     } else {
         marcadorUbicacion.setLatLng(latlng);
         circuloPrecision.setLatLng(latlng);
         circuloPrecision.setRadius(pos.coords.accuracy || 0);
         flechaBrujula.setLatLng(latlng);
+        if (modoSeguir) map.panTo(latlng);
     }
 
     markers.forEach(m => {
