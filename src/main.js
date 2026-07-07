@@ -301,7 +301,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
     const numeroEtiqueta = L.marker([centerLat, centerLon], {
         icon: L.divIcon({
             className: 'numero-etiqueta',
-            html: `${parcela.numero}`,
+            html: `<span style="border-color:${parcela.color};color:${parcela.color}">${parcela.numero}</span>`,
             iconSize: [24, 18],
             popupAnchor: [0, -8]
         })
