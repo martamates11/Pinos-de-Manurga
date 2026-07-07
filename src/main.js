@@ -20,8 +20,6 @@ const parcelas = [
     { ref: "18-02-0342-00-0000-0000-BR", seccion: "02", nombre: "ARRIZURI", numero: "11", superficie: "14.536,42", xmin: 519577.812, ymin: 4756374.028, xmax: 520180.945, ymax: 4756673.669, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-03-0695-00-0000-0000-CO", seccion: "03", nombre: "IZUA", numero: "12", superficie: "1.227,09", xmin: 518855.179, ymin: 4756809.513, xmax: 521106.739, ymax: 4757928.104, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-03-0930-00-0000-0000-GR", seccion: "03", nombre: "MURABE", numero: "13", superficie: "665,07", xmin: 519831.856, ymin: 4758068.721, xmax: 520049.687, ymax: 4758176.941, propietario: "José Ángel", color: "#2a5298" },
-    { ref: "18-03-0850-00-0000-0000-??", seccion: "03", nombre: "ITURBEKO", numero: "32", superficie: "", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "José Ángel", color: "#2a5298" },
-    { ref: "18-03-0835-00-0000-0000-??", seccion: "03", nombre: "MURABE", numero: "33", superficie: "", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-02-0324-00-0000-0000-MP", seccion: "02", nombre: "KUTXASTEN", numero: "14", superficie: "22.151,59", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
     { ref: "18-02-0546-00-0000-0000-CO", seccion: "02", nombre: "CUCHASTEU", numero: "15", superficie: "2.569,30", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
     { ref: "18-02-0594-00-0000-0000-MR", seccion: "02", nombre: "BERESI", numero: "16", superficie: "9.604,18", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
