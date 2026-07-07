@@ -12,6 +12,6 @@ jobs:
       - name: Ping Supabase REST endpoint
         run: |
           curl -sf -o /dev/null -w "%{http_code}\n" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/publicaciones?select=id&limit=1" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+            "https://wbodxgszyoxyhvkapded.supabase.co/rest/v1/publicaciones?select=id&limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indib2R4Z3N6eW94eWh2a2FwZGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzk0NDQsImV4cCI6MjA5NzQ1NTQ0NH0.pbHIkVWDu5-6nI0teofI2OPCVkBbDmEjucgY-zECPxs" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indib2R4Z3N6eW94eWh2a2FwZGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzk0NDQsImV4cCI6MjA5NzQ1NTQ0NH0.pbHIkVWDu5-6nI0teofI2OPCVkBbDmEjucgY-zECPxs"
