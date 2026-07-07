@@ -27,7 +27,17 @@ const parcelas = [
     { ref: "18-03-0764-00-0000-0000-JU", seccion: "03", nombre: "DEHESA", numero: "18", superficie: "881,21", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
     { ref: "18-03-0836-00-0000-0000-IY", seccion: "03", nombre: "LA TEJERA", numero: "19", superficie: "2.392,56", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
     { ref: "18-03-1784-00-0000-0000-GP", seccion: "03", nombre: "BOLUMBURU", numero: "20", superficie: "387,83", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
-    { ref: "18-03-1788-00-0000-0000-EV", seccion: "03", nombre: "LA DEHESA", numero: "21", superficie: "855,97", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" }
+    { ref: "18-03-1788-00-0000-0000-EV", seccion: "03", nombre: "LA DEHESA", numero: "21", superficie: "855,97", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "ZIG-03-0661", seccion: "03", nombre: "LAMINOAR", numero: "22", superficie: "2.912,49", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0661" },
+    { ref: "ZIG-03-0665", seccion: "03", nombre: "LAMINOAR", numero: "23", superficie: "4.041,17", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0665" },
+    { ref: "ZIG-02-0326", seccion: "02", nombre: "GLMMO", numero: "24", superficie: "17.262,00", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "0326" },
+    { ref: "ZIG-02-0574", seccion: "02", nombre: "ORAGA", numero: "25", superficie: "1.826,64", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "0574" },
+    { ref: "ZIG-02-0614", seccion: "02", nombre: "BERESI", numero: "26", superficie: "3.210,15", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "0614" },
+    { ref: "ZIG-02-1916", seccion: "02", nombre: "TULAU", numero: "27", superficie: "1.134,62", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "1916" },
+    { ref: "ZIG-03-0698", seccion: "03", nombre: "IZUA", numero: "28", superficie: "2.304,43", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0698" },
+    { ref: "ZIG-03-0738", seccion: "03", nombre: "CHORROMO", numero: "29", superficie: "2.566,82", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0738" },
+    { ref: "ZIG-03-0925", seccion: "03", nombre: "MURABE", numero: "30", superficie: "2.075,87", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0925" },
+    { ref: "ZIG-03-1780", seccion: "03", nombre: "LA DEHESA", numero: "31", superficie: "789,80", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "1780" }
 ];
 
 // =========================================================================
@@ -571,13 +581,30 @@ async function obtenerPoligonoRealPorRef(parcela) {
     return anilloDeFeature(datos.features[0]);
 }
 
+async function obtenerPoligonoRealPorPoligonoYParcela(parcela) {
+    // Para parcelas sin referencia moderna, filtra por los últimos dígitos de nationalCadastralReference
+    // que siempre terminan en {poligono_2digit}{parcela_4digit}
+    const sufijo = `${parcela.wfsPoly}${parcela.wfsParc}`;
+    const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&CQL_FILTER=nationalCadastralReference LIKE '%25${sufijo}'&outputFormat=application/json`;
+
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) throw new Error('WFS no disponible');
+    const datos = await respuesta.json();
+    if (!datos.features || datos.features.length === 0) return null;
+    // Si hay más de uno, elegir el de mayor superficie (por área de bounding box)
+    const feature = datos.features[0];
+    return anilloDeFeature(feature);
+}
+
 async function cargarPoligonosReales() {
     const fallidas = [];
 
-    // Parcelas sin coordenadas: obtener polígono por referencia y crear marcador
+    // Parcelas sin coordenadas: obtener polígono por referencia (o por polígono/parcela) y crear marcador
     for (const parcela of parcelasSinCoords) {
         try {
-            const anillo = await obtenerPoligonoRealPorRef(parcela);
+            const anillo = parcela.wfsPoly
+                ? await obtenerPoligonoRealPorPoligonoYParcela(parcela)
+                : await obtenerPoligonoRealPorRef(parcela);
             if (!anillo) { fallidas.push(parcela); continue; }
 
             const lats = anillo.map(p => p.lat);
