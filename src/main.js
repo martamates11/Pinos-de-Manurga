@@ -246,7 +246,7 @@ parcelas.forEach((parcela, index) => {
 
     const popupContent = `
         <div class="popup-info">
-            <div class="popup-nombre">${parcela.nombre}</div>
+            <div class="popup-nombre">${parcela.nombre} <span class="popup-propietario">· José Ángel</span></div>
             <div class="popup-info-row">
                 <span class="popup-numero">Nº ${parcela.numero}</span>
                 <span class="popup-superficie">📐 ${parcela.superficie} m²</span>

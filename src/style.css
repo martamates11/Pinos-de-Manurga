@@ -47,6 +47,7 @@ body { font-family: 'Montserrat', 'Segoe UI', sans-serif; background: #e9edf2; h
 .popup-imagen img { max-width: 100%; max-height: 320px; border-radius: 6px; border: 1px solid #ddd; }
 .popup-imagen:hover { background: #e8e8e8; }
 .popup-nombre { font-size: 1.4rem; font-weight: 700; color: #122b44; border-left: 4px solid #c6b378; padding-left: 10px; font-family: 'Cormorant Garamond', serif; margin-bottom: 8px; }
+.popup-propietario { font-size: 0.85rem; font-weight: 400; color: #c6b378; font-family: 'Montserrat', sans-serif; }
 .popup-info-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
 .popup-numero { font-size: 0.95rem; font-weight: 600; color: #34a853; background: #e8f5e9; padding: 4px 12px; border-radius: 20px; display: inline-block; }
 .popup-superficie { font-size: 0.9rem; font-weight: 600; color: #c6b378; background: #1e2a3a; padding: 4px 12px; border-radius: 20px; display: inline-block; }
