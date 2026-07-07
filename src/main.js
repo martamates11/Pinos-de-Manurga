@@ -557,6 +557,12 @@ function anilloDeFeature(feature) {
     });
 }
 
+function superficieDeFeature(feature) {
+    const m2 = feature.properties && (feature.properties.areaValue || feature.properties.area_value || feature.properties.area);
+    if (!m2) return null;
+    return Number(m2).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 async function obtenerPoligonoReal(parcela) {
     const margen = 5;
     const bbox = `${parcela.xmin - margen},${parcela.ymin - margen},${parcela.xmax + margen},${parcela.ymax + margen},urn:ogc:def:crs:EPSG::25830`;
@@ -569,7 +575,7 @@ async function obtenerPoligonoReal(parcela) {
     const refBuscada = referenciaNacional(parcela.ref);
     const feature = (datos.features || []).find(f => f.properties && f.properties.nationalCadastralReference === refBuscada);
     if (!feature) return null;
-    return anilloDeFeature(feature);
+    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
 }
 
 async function obtenerPoligonoRealPorRef(parcela) {
@@ -580,12 +586,11 @@ async function obtenerPoligonoRealPorRef(parcela) {
     if (!respuesta.ok) throw new Error('WFS no disponible');
     const datos = await respuesta.json();
     if (!datos.features || datos.features.length === 0) return null;
-    return anilloDeFeature(datos.features[0]);
+    const feature = datos.features[0];
+    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
 }
 
 async function obtenerPoligonoRealPorPoligonoYParcela(parcela) {
-    // Para parcelas sin referencia moderna, filtra por los últimos dígitos de nationalCadastralReference
-    // que siempre terminan en {poligono_2digit}{parcela_4digit}
     const sufijo = `${parcela.wfsPoly}${parcela.wfsParc}`;
     const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&CQL_FILTER=nationalCadastralReference LIKE '%25${sufijo}'&outputFormat=application/json`;
 
@@ -593,9 +598,8 @@ async function obtenerPoligonoRealPorPoligonoYParcela(parcela) {
     if (!respuesta.ok) throw new Error('WFS no disponible');
     const datos = await respuesta.json();
     if (!datos.features || datos.features.length === 0) return null;
-    // Si hay más de uno, elegir el de mayor superficie (por área de bounding box)
     const feature = datos.features[0];
-    return anilloDeFeature(feature);
+    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
 }
 
 async function cargarPoligonosReales() {
@@ -604,11 +608,13 @@ async function cargarPoligonosReales() {
     // Parcelas sin coordenadas: obtener polígono por referencia (o por polígono/parcela) y crear marcador
     for (const parcela of parcelasSinCoords) {
         try {
-            const anillo = parcela.wfsPoly
+            const resultado = parcela.wfsPoly
                 ? await obtenerPoligonoRealPorPoligonoYParcela(parcela)
                 : await obtenerPoligonoRealPorRef(parcela);
-            if (!anillo) { fallidas.push(parcela); continue; }
+            if (!resultado) { fallidas.push(parcela); continue; }
 
+            if (!parcela.superficie && resultado.superficie) parcela.superficie = resultado.superficie;
+            const { anillo } = resultado;
             const lats = anillo.map(p => p.lat);
             const lngs = anillo.map(p => p.lng);
             const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
@@ -631,16 +637,18 @@ async function cargarPoligonosReales() {
         }
     }
 
-    // Actualizar dropdown con parcelas de Juli que se hayan podido crear
+    // Actualizar dropdown con parcelas de Juli/Félix que se hayan podido crear
     actualizarDropdown();
 
     // Parcelas con coordenadas: obtener polígono por bbox
     for (const m of markers) {
         if (m.anillo) continue; // ya tiene polígono (parcelas sin coords resueltas arriba)
         try {
-            const anillo = await obtenerPoligonoReal(m.parcela);
-            if (!anillo) { fallidas.push(m.parcela); continue; }
+            const resultado = await obtenerPoligonoReal(m.parcela);
+            if (!resultado) { fallidas.push(m.parcela); continue; }
 
+            if (!m.parcela.superficie && resultado.superficie) m.parcela.superficie = resultado.superficie;
+            const { anillo } = resultado;
             m.anillo = anillo;
             m.rectLindero = L.polygon(anillo, {
                 color: '#d4af37',
