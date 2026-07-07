@@ -9,17 +9,35 @@ if ('serviceWorker' in navigator) {
 proj4.defs("EPSG:25830", "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs");
 
 const parcelas = [
-    { ref: "18-03-0911-00-0000-0000-LU", seccion: "03", nombre: "MURABE", numero: "1", superficie: "1.698,27", xmin: 519959.351, ymin: 4758238.643, xmax: 520183.924, ymax: 4758350.212 },
-    { ref: "18-03-1782-00-0000-0000-HZ", seccion: "03", nombre: "LA DEHESA", numero: "2", superficie: "3.627,60", xmin: 519985.119, ymin: 4757738.252, xmax: 520374.441, ymax: 4757931.67 },
-    { ref: "18-03-1781-00-0000-0000-BR", seccion: "03", nombre: "LA DEHESA", numero: "3", superficie: "327,45", xmin: 520059.34, ymin: 4757845.348, xmax: 520246.483, ymax: 4757938.322 },
-    { ref: "18-02-0624-00-0000-0000-KV", seccion: "02", nombre: "STA MARINA", numero: "5", superficie: "951,54", xmin: 519225.005, ymin: 4756350.634, xmax: 519519.533, ymax: 4756496.958 },
-    { ref: "18-02-0865-00-0000-0000-IR", seccion: "02", nombre: "LA TEJERA", numero: "6", superficie: "11.265,81", xmin: 519202.863, ymin: 4756834.564, xmax: 519619.465, ymax: 4757041.535 },
-    { ref: "18-02-0873-00-0000-0000-DX", seccion: "02", nombre: "LA TEJERA CHAVOLABARRI", numero: "7", superficie: "1.913,40", xmin: 519048.465, ymin: 4757391.545, xmax: 519313.136, ymax: 4757523.035 },
-    { ref: "18-02-1789-00-0000-0000-IQ", seccion: "02", nombre: "AIDEGUI", numero: "9", superficie: "3.415,61", xmin: 518979.793, ymin: 4756536.379, xmax: 519338.573, ymax: 4756714.623 },
-    { ref: "18-03-1783-00-0000-0000-AU", seccion: "03", nombre: "LA DEHESA", numero: "10", superficie: "514,89", xmin: 520018.883, ymin: 4757844.438, xmax: 520223.384, ymax: 4757946.036 },
-    { ref: "18-02-0342-00-0000-0000-BR", seccion: "02", nombre: "ARRIZURI", numero: "11", superficie: "14.536,42", xmin: 519577.812, ymin: 4756374.028, xmax: 520180.945, ymax: 4756673.669 },
-    { ref: "18-03-0695-00-0000-0000-CO", seccion: "03", nombre: "IZUA", numero: "12", superficie: "1.227,09", xmin: 518855.179, ymin: 4756809.513, xmax: 521106.739, ymax: 4757928.104 },
-    { ref: "18-03-0930-00-0000-0000-GR", seccion: "03", nombre: "MURABE", numero: "13", superficie: "665,07", xmin: 519831.856, ymin: 4758068.721, xmax: 520049.687, ymax: 4758176.941 }
+    { ref: "18-03-0911-00-0000-0000-LU", seccion: "03", nombre: "MURABE", numero: "1", superficie: "1.698,27", xmin: 519959.351, ymin: 4758238.643, xmax: 520183.924, ymax: 4758350.212, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-03-1782-00-0000-0000-HZ", seccion: "03", nombre: "LA DEHESA", numero: "2", superficie: "3.627,60", xmin: 519985.119, ymin: 4757738.252, xmax: 520374.441, ymax: 4757931.67, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-03-1781-00-0000-0000-BR", seccion: "03", nombre: "LA DEHESA", numero: "3", superficie: "327,45", xmin: 520059.34, ymin: 4757845.348, xmax: 520246.483, ymax: 4757938.322, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-02-0624-00-0000-0000-KV", seccion: "02", nombre: "STA MARINA", numero: "5", superficie: "951,54", xmin: 519225.005, ymin: 4756350.634, xmax: 519519.533, ymax: 4756496.958, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-02-0865-00-0000-0000-IR", seccion: "02", nombre: "LA TEJERA", numero: "6", superficie: "11.265,81", xmin: 519202.863, ymin: 4756834.564, xmax: 519619.465, ymax: 4757041.535, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-02-0873-00-0000-0000-DX", seccion: "02", nombre: "LA TEJERA CHAVOLABARRI", numero: "7", superficie: "1.913,40", xmin: 519048.465, ymin: 4757391.545, xmax: 519313.136, ymax: 4757523.035, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-02-1789-00-0000-0000-IQ", seccion: "02", nombre: "AIDEGUI", numero: "9", superficie: "3.415,61", xmin: 518979.793, ymin: 4756536.379, xmax: 519338.573, ymax: 4756714.623, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-03-1783-00-0000-0000-AU", seccion: "03", nombre: "LA DEHESA", numero: "10", superficie: "514,89", xmin: 520018.883, ymin: 4757844.438, xmax: 520223.384, ymax: 4757946.036, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-02-0342-00-0000-0000-BR", seccion: "02", nombre: "ARRIZURI", numero: "11", superficie: "14.536,42", xmin: 519577.812, ymin: 4756374.028, xmax: 520180.945, ymax: 4756673.669, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-03-0695-00-0000-0000-CO", seccion: "03", nombre: "IZUA", numero: "12", superficie: "1.227,09", xmin: 518855.179, ymin: 4756809.513, xmax: 521106.739, ymax: 4757928.104, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-03-0930-00-0000-0000-GR", seccion: "03", nombre: "MURABE", numero: "13", superficie: "665,07", xmin: 519831.856, ymin: 4758068.721, xmax: 520049.687, ymax: 4758176.941, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-02-0324-00-0000-0000-MP", seccion: "02", nombre: "KUTXASTEN", numero: "14", superficie: "22.151,59", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-02-0546-00-0000-0000-CO", seccion: "02", nombre: "CUCHASTEU", numero: "15", superficie: "2.569,30", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-02-0594-00-0000-0000-MR", seccion: "02", nombre: "BERESI", numero: "16", superficie: "9.604,18", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-03-0667-00-0000-0000-GQ", seccion: "03", nombre: "LAMINOAR", numero: "17", superficie: "1.359,65", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-03-0764-00-0000-0000-JU", seccion: "03", nombre: "DEHESA", numero: "18", superficie: "881,21", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-03-0836-00-0000-0000-IY", seccion: "03", nombre: "LA TEJERA", numero: "19", superficie: "2.392,56", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-03-1784-00-0000-0000-GP", seccion: "03", nombre: "BOLUMBURU", numero: "20", superficie: "387,83", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "18-03-1788-00-0000-0000-EV", seccion: "03", nombre: "LA DEHESA", numero: "21", superficie: "855,97", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
+    { ref: "ZIG-03-0661", seccion: "03", nombre: "LAMINOAR", numero: "22", superficie: "2.912,49", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0661" },
+    { ref: "ZIG-03-0665", seccion: "03", nombre: "LAMINOAR", numero: "23", superficie: "4.041,17", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0665" },
+    { ref: "ZIG-02-0326", seccion: "02", nombre: "GLMMO", numero: "24", superficie: "17.262,00", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "0326" },
+    { ref: "ZIG-02-0574", seccion: "02", nombre: "ORAGA", numero: "25", superficie: "1.826,64", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "0574" },
+    { ref: "ZIG-02-0614", seccion: "02", nombre: "BERESI", numero: "26", superficie: "3.210,15", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "0614" },
+    { ref: "ZIG-02-1916", seccion: "02", nombre: "TULAU", numero: "27", superficie: "1.134,62", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "02", wfsParc: "1916" },
+    { ref: "ZIG-03-0698", seccion: "03", nombre: "IZUA", numero: "28", superficie: "2.304,43", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0698" },
+    { ref: "ZIG-03-0738", seccion: "03", nombre: "CHORROMO", numero: "29", superficie: "2.566,82", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0738" },
+    { ref: "ZIG-03-0925", seccion: "03", nombre: "MURABE", numero: "30", superficie: "2.075,87", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "0925" },
+    { ref: "ZIG-03-1780", seccion: "03", nombre: "LA DEHESA", numero: "31", superficie: "789,80", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Félix", color: "#7b2d8b", wfsPoly: "03", wfsParc: "1780" }
 ];
 
 // =========================================================================
@@ -111,7 +129,6 @@ L.control.layers(
 ).addTo(map);
 L.control.scale({ metric: true, imperial: false }).addTo(map);
 
-const colors = { "02": "#2a5298", "03": "#2a5298" };
 let allBounds = null;
 const markers = [];
 
@@ -231,13 +248,7 @@ async function publicar(numero, texto, archivo, contenedorLista, statusEl) {
     }
 }
 
-parcelas.forEach((parcela, index) => {
-    const minLatLon = utmToLatLon(parcela.xmin, parcela.ymin);
-    const maxLatLon = utmToLatLon(parcela.xmax, parcela.ymax);
-    const bounds = [[minLatLon[0], minLatLon[1]], [maxLatLon[0], maxLatLon[1]]];
-    const centerLat = (minLatLon[0] + maxLatLon[0]) / 2;
-    const centerLon = (minLatLon[1] + maxLatLon[1]) / 2;
-
+function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
     const listaId = `lista_${parcela.numero}`;
     const textareaId = `texto_${parcela.numero}`;
     const fileId = `file_${parcela.numero}`;
@@ -246,7 +257,7 @@ parcelas.forEach((parcela, index) => {
 
     const popupContent = `
         <div class="popup-info">
-            <div class="popup-nombre">${parcela.nombre}</div>
+            <div class="popup-nombre">${parcela.nombre} <span class="popup-propietario">· ${parcela.propietario}</span></div>
             <div class="popup-info-row">
                 <span class="popup-numero">Nº ${parcela.numero}</span>
                 <span class="popup-superficie">📐 ${parcela.superficie} m²</span>
@@ -275,7 +286,7 @@ parcelas.forEach((parcela, index) => {
 
     const marker = L.circleMarker([centerLat, centerLon], {
         radius: 10,
-        fillColor: colors[parcela.seccion],
+        fillColor: parcela.color,
         color: '#ffffff',
         weight: 2.5,
         fillOpacity: 0.85
@@ -288,7 +299,7 @@ parcelas.forEach((parcela, index) => {
     const numeroEtiqueta = L.marker([centerLat, centerLon], {
         icon: L.divIcon({
             className: 'numero-etiqueta',
-            html: `${parcela.numero}`,
+            html: `<span style="border-color:${parcela.color};color:${parcela.color}">${parcela.numero}</span>`,
             iconSize: [24, 18],
             popupAnchor: [0, -8]
         })
@@ -312,10 +323,27 @@ parcelas.forEach((parcela, index) => {
         });
     });
 
-    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, index, rectLindero: null, anillo: null, cercaLindero: false });
+    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, rectLindero: null, anillo: null, cercaLindero: false });
 
-    if (!allBounds) allBounds = L.latLngBounds(bounds);
-    else allBounds.extend(bounds);
+    if (bounds) {
+        if (!allBounds) allBounds = L.latLngBounds(bounds);
+        else allBounds.extend(bounds);
+    }
+}
+
+const parcelasSinCoords = [];
+
+parcelas.forEach((parcela) => {
+    if (parcela.xmin === null) {
+        parcelasSinCoords.push(parcela);
+        return;
+    }
+    const minLatLon = utmToLatLon(parcela.xmin, parcela.ymin);
+    const maxLatLon = utmToLatLon(parcela.xmax, parcela.ymax);
+    const bounds = [[minLatLon[0], minLatLon[1]], [maxLatLon[0], maxLatLon[1]]];
+    const centerLat = (minLatLon[0] + maxLatLon[0]) / 2;
+    const centerLon = (minLatLon[1] + maxLatLon[1]) / 2;
+    crearMarcadorParcela(parcela, centerLat, centerLon, bounds);
 });
 
 if (allBounds) map.fitBounds(allBounds, { padding: [40, 40] });
@@ -339,19 +367,26 @@ function activateParcela(index) {
     dropdownButton.classList.remove('open');
 }
 
-const dropdownItems = document.getElementById('dropdownItems');
-parcelas.forEach((parcela, index) => {
-    const item = document.createElement('div');
-    item.className = 'dropdown-parcela';
-    item.innerHTML = `
-        <div class="dropdown-nombre">${parcela.nombre}</div>
-        <div class="dropdown-numero">Nº ${parcela.numero} · Sección ${parcela.seccion}</div>
-        <div class="dropdown-ref">${parcela.ref}</div>
-    `;
-    item.addEventListener('click', () => { activateParcela(index); });
-    dropdownItems.appendChild(item);
-});
-document.querySelector('.dropdown-button').innerHTML = `📋 Parcelas (${parcelas.length}) <span class="dropdown-arrow">▼</span>`;
+const dropdownItemsEl = document.getElementById('dropdownItems');
+
+function actualizarDropdown() {
+    dropdownItemsEl.innerHTML = '';
+    markers.forEach((m, index) => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-parcela';
+        const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${m.parcela.color};margin-right:5px;vertical-align:middle;"></span>`;
+        item.innerHTML = `
+            <div class="dropdown-nombre">${dot}${m.parcela.nombre}</div>
+            <div class="dropdown-numero">Nº ${m.parcela.numero} · ${m.parcela.propietario}</div>
+            <div class="dropdown-ref">${m.parcela.ref}</div>
+        `;
+        item.addEventListener('click', () => { activateParcela(index); });
+        dropdownItemsEl.appendChild(item);
+    });
+    document.querySelector('.dropdown-button').innerHTML = `📋 Parcelas (${markers.length}) <span class="dropdown-arrow">▼</span>`;
+}
+
+actualizarDropdown();
 
 const dropdownButton = document.getElementById('dropdownButton');
 const dropdownList = document.getElementById('dropdownList');
@@ -510,6 +545,22 @@ function referenciaNacional(ref) {
     return ref.split('-').slice(0, 3).join('');
 }
 
+function anilloDeFeature(feature) {
+    const anilloUtm = feature.geometry.type === 'Polygon'
+        ? feature.geometry.coordinates[0]
+        : feature.geometry.coordinates[0][0];
+    return anilloUtm.map(([x, y]) => {
+        const [lat, lon] = utmToLatLon(x, y);
+        return L.latLng(lat, lon);
+    });
+}
+
+function superficieDeFeature(feature) {
+    const m2 = feature.properties && (feature.properties.areaValue || feature.properties.area_value || feature.properties.area);
+    if (!m2) return null;
+    return Number(m2).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 async function obtenerPoligonoReal(parcela) {
     const margen = 5;
     const bbox = `${parcela.xmin - margen},${parcela.ymin - margen},${parcela.xmax + margen},${parcela.ymax + margen},urn:ogc:def:crs:EPSG::25830`;
@@ -522,25 +573,80 @@ async function obtenerPoligonoReal(parcela) {
     const refBuscada = referenciaNacional(parcela.ref);
     const feature = (datos.features || []).find(f => f.properties && f.properties.nationalCadastralReference === refBuscada);
     if (!feature) return null;
+    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
+}
 
-    const anilloUtm = feature.geometry.type === 'Polygon'
-        ? feature.geometry.coordinates[0]
-        : feature.geometry.coordinates[0][0];
+async function obtenerPoligonoRealPorRef(parcela) {
+    const refBuscada = referenciaNacional(parcela.ref);
+    const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&CQL_FILTER=nationalCadastralReference='${refBuscada}'&outputFormat=application/json`;
 
-    return anilloUtm.map(([x, y]) => {
-        const [lat, lon] = utmToLatLon(x, y);
-        return L.latLng(lat, lon);
-    });
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) throw new Error('WFS no disponible');
+    const datos = await respuesta.json();
+    if (!datos.features || datos.features.length === 0) return null;
+    const feature = datos.features[0];
+    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
+}
+
+async function obtenerPoligonoRealPorPoligonoYParcela(parcela) {
+    const sufijo = `${parcela.wfsPoly}${parcela.wfsParc}`;
+    const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&CQL_FILTER=nationalCadastralReference LIKE '%25${sufijo}'&outputFormat=application/json`;
+
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) throw new Error('WFS no disponible');
+    const datos = await respuesta.json();
+    if (!datos.features || datos.features.length === 0) return null;
+    const feature = datos.features[0];
+    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
 }
 
 async function cargarPoligonosReales() {
     const fallidas = [];
 
-    for (const m of markers) {
+    // Parcelas sin coordenadas: obtener polígono por referencia (o por polígono/parcela) y crear marcador
+    for (const parcela of parcelasSinCoords) {
         try {
-            const anillo = await obtenerPoligonoReal(m.parcela);
-            if (!anillo) { fallidas.push(m.parcela); continue; }
+            const resultado = parcela.wfsPoly
+                ? await obtenerPoligonoRealPorPoligonoYParcela(parcela)
+                : await obtenerPoligonoRealPorRef(parcela);
+            if (!resultado) { fallidas.push(parcela); continue; }
 
+            if (!parcela.superficie && resultado.superficie) parcela.superficie = resultado.superficie;
+            const { anillo } = resultado;
+            const lats = anillo.map(p => p.lat);
+            const lngs = anillo.map(p => p.lng);
+            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+            const centerLon = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+            const bounds = [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]];
+
+            crearMarcadorParcela(parcela, centerLat, centerLon, bounds);
+            const m = markers[markers.length - 1];
+            m.anillo = anillo;
+            m.rectLindero = L.polygon(anillo, {
+                color: '#d4af37',
+                weight: 5,
+                fillOpacity: 0,
+                opacity: 0,
+                interactive: false
+            }).addTo(map);
+        } catch (e) {
+            console.error(`No se pudo obtener el polígono de ${parcela.nombre}`, e);
+            fallidas.push(parcela);
+        }
+    }
+
+    // Actualizar dropdown con parcelas de Juli/Félix que se hayan podido crear
+    actualizarDropdown();
+
+    // Parcelas con coordenadas: obtener polígono por bbox
+    for (const m of markers) {
+        if (m.anillo) continue; // ya tiene polígono (parcelas sin coords resueltas arriba)
+        try {
+            const resultado = await obtenerPoligonoReal(m.parcela);
+            if (!resultado) { fallidas.push(m.parcela); continue; }
+
+            if (!m.parcela.superficie && resultado.superficie) m.parcela.superficie = resultado.superficie;
+            const { anillo } = resultado;
             m.anillo = anillo;
             m.rectLindero = L.polygon(anillo, {
                 color: '#d4af37',
