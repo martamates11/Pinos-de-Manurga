@@ -18,7 +18,7 @@ const parcelas = [
     { ref: "18-02-1789-00-0000-0000-IQ", seccion: "02", nombre: "AIDEGUI", numero: "9", superficie: "3.415,61", xmin: 518979.793, ymin: 4756536.379, xmax: 519338.573, ymax: 4756714.623, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-03-1783-00-0000-0000-AU", seccion: "03", nombre: "LA DEHESA", numero: "10", superficie: "514,89", xmin: 520018.883, ymin: 4757844.438, xmax: 520223.384, ymax: 4757946.036, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-02-0342-00-0000-0000-BR", seccion: "02", nombre: "ARRIZURI", numero: "11", superficie: "14.536,42", xmin: 519577.812, ymin: 4756374.028, xmax: 520180.945, ymax: 4756673.669, propietario: "José Ángel", color: "#2a5298" },
-    { ref: "18-03-0695-00-0000-0000-CO", seccion: "03", nombre: "IZUA", numero: "12", superficie: "1.227,09", xmin: 518855.179, ymin: 4756809.513, xmax: 521106.739, ymax: 4757928.104, propietario: "José Ángel", color: "#2a5298" },
+    { ref: "18-03-0695-00-0000-0000-CD", seccion: "03", nombre: "IZUA", numero: "12", superficie: "1.227,09", xmin: 518855.179, ymin: 4756809.513, xmax: 521106.739, ymax: 4757928.104, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-03-0930-00-0000-0000-GR", seccion: "03", nombre: "MURABE", numero: "13", superficie: "665,07", xmin: 519831.856, ymin: 4758068.721, xmax: 520049.687, ymax: 4758176.941, propietario: "José Ángel", color: "#2a5298" },
     { ref: "18-02-0324-00-0000-0000-MP", seccion: "02", nombre: "KUTXASTEN", numero: "14", superficie: "22.151,59", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
     { ref: "18-02-0546-00-0000-0000-CO", seccion: "02", nombre: "CUCHASTEU", numero: "15", superficie: "2.569,30", xmin: null, ymin: null, xmax: null, ymax: null, propietario: "Juli", color: "#e07020" },
@@ -255,7 +255,8 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
     const statusId = `status_${parcela.numero}`;
     const btnId = `btn_${parcela.numero}`;
 
-    const popupContent = `
+    function popupHtml(lat, lon) {
+        return `
         <div class="popup-info">
             <div class="popup-nombre">${parcela.nombre} <span class="popup-propietario">· ${parcela.propietario}</span></div>
             <div class="popup-info-row">
@@ -265,10 +266,10 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
             <div class="popup-ref">📋 ${parcela.ref}</div>
             <div class="popup-coords">
                 <div>📍 Coordenadas (WGS84):</div>
-                <div>Latitud: ${centerLat.toFixed(6)}°</div>
-                <div>Longitud: ${centerLon.toFixed(6)}°</div>
+                <div>Latitud: ${lat.toFixed(6)}°</div>
+                <div>Longitud: ${lon.toFixed(6)}°</div>
             </div>
-            <button class="popup-nav-button" onclick="window.openNavigation(${centerLat}, ${centerLon}, '${parcela.ref}', '${parcela.nombre}')">
+            <button class="popup-nav-button" onclick="window.openNavigation(${lat}, ${lon}, '${parcela.ref}', '${parcela.nombre}')">
                 🧭 Navegar hasta la parcela
             </button>
             <div class="publicaciones">
@@ -283,6 +284,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
             </div>
         </div>
     `;
+    }
 
     const marker = L.circleMarker([centerLat, centerLon], {
         radius: 10,
@@ -290,7 +292,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
         color: '#ffffff',
         weight: 2.5,
         fillOpacity: 0.85
-    }).addTo(map).bindPopup(popupContent, {
+    }).addTo(map).bindPopup(popupHtml(centerLat, centerLon), {
         maxWidth: Math.min(window.innerWidth - 24, 520),
         minWidth: Math.min(window.innerWidth - 24, 340),
         maxHeight: Math.round(window.innerHeight * 0.75)
@@ -323,7 +325,15 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
         });
     });
 
-    markers.push({ marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, rectLindero: null, anillo: null, cercaLindero: false });
+    const markerData = { marker, etiqueta: numeroEtiqueta, bounds, center: [centerLat, centerLon], parcela, rectLindero: null, anillo: null, cercaLindero: false };
+    markerData.reposicionar = (lat, lon, nuevosBounds) => {
+        marker.setLatLng([lat, lon]);
+        numeroEtiqueta.setLatLng([lat, lon]);
+        marker.setPopupContent(popupHtml(lat, lon));
+        markerData.bounds = nuevosBounds;
+        markerData.center = [lat, lon];
+    };
+    markers.push(markerData);
 
     if (bounds) {
         if (!allBounds) allBounds = L.latLngBounds(bounds);
@@ -561,21 +571,6 @@ function superficieDeFeature(feature) {
     return Number(m2).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-async function obtenerPoligonoReal(parcela) {
-    const margen = 5;
-    const bbox = `${parcela.xmin - margen},${parcela.ymin - margen},${parcela.xmax + margen},${parcela.ymax + margen},urn:ogc:def:crs:EPSG::25830`;
-    const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&BBOX=${bbox}&outputFormat=application/json`;
-
-    const respuesta = await fetch(url);
-    if (!respuesta.ok) throw new Error('WFS no disponible');
-    const datos = await respuesta.json();
-
-    const refBuscada = referenciaNacional(parcela.ref);
-    const feature = (datos.features || []).find(f => f.properties && f.properties.nationalCadastralReference === refBuscada);
-    if (!feature) return null;
-    return { anillo: anilloDeFeature(feature), superficie: superficieDeFeature(feature) };
-}
-
 async function obtenerPoligonoRealPorRef(parcela) {
     const refBuscada = referenciaNacional(parcela.ref);
     const url = `${WFS_CADASTRO_URL}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=INSPIRE_CP:CP.CadastralParcel&CQL_FILTER=nationalCadastralReference='${refBuscada}'&outputFormat=application/json`;
@@ -638,16 +633,25 @@ async function cargarPoligonosReales() {
     // Actualizar dropdown con parcelas de Juli/Félix que se hayan podido crear
     actualizarDropdown();
 
-    // Parcelas con coordenadas: obtener polígono por bbox
+    // Parcelas con coordenadas: obtener polígono real por referencia catastral
+    // (no por bbox, para no depender de que las coordenadas guardadas sean exactas)
     for (const m of markers) {
         if (m.anillo) continue; // ya tiene polígono (parcelas sin coords resueltas arriba)
         try {
-            const resultado = await obtenerPoligonoReal(m.parcela);
+            const resultado = await obtenerPoligonoRealPorRef(m.parcela);
             if (!resultado) { fallidas.push(m.parcela); continue; }
 
             if (!m.parcela.superficie && resultado.superficie) m.parcela.superficie = resultado.superficie;
             const { anillo } = resultado;
             m.anillo = anillo;
+
+            const lats = anillo.map(p => p.lat);
+            const lngs = anillo.map(p => p.lng);
+            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+            const centerLon = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+            const bounds = [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]];
+            m.reposicionar(centerLat, centerLon, bounds);
+
             m.rectLindero = L.polygon(anillo, {
                 color: '#d4af37',
                 weight: 5,
@@ -660,6 +664,10 @@ async function cargarPoligonosReales() {
             fallidas.push(m.parcela);
         }
     }
+
+    // Recalcular el encuadre general ("Ver todas") con las posiciones ya corregidas por el polígono real
+    allBounds = null;
+    markers.forEach(m => { if (m.bounds) { if (!allBounds) allBounds = L.latLngBounds(m.bounds); else allBounds.extend(m.bounds); } });
 
     const total = markers.length;
     const ok = total - fallidas.length;
