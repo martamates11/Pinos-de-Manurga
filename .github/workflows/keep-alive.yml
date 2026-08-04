@@ -10,8 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase REST endpoint
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL or SUPABASE_ANON_KEY secret is not set"
+            exit 1
+          fi
           curl -sf -o /dev/null -w "%{http_code}\n" \
-            "https://wbodxgszyoxyhvkapded.supabase.co/rest/v1/publicaciones?select=id&limit=1" \
-            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indib2R4Z3N6eW94eWh2a2FwZGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzk0NDQsImV4cCI6MjA5NzQ1NTQ0NH0.pbHIkVWDu5-6nI0teofI2OPCVkBbDmEjucgY-zECPxs" \
-            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indib2R4Z3N6eW94eWh2a2FwZGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzk0NDQsImV4cCI6MjA5NzQ1NTQ0NH0.pbHIkVWDu5-6nI0teofI2OPCVkBbDmEjucgY-zECPxs"
+            "$SUPABASE_URL/rest/v1/publicaciones?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"
