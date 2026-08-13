@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import proj4 from 'proj4';
 import { supabase, MEDIA_BUCKET } from './supabaseClient.js';
+import { publicacionesEstaticasDeParcela } from './publicacionesEstaticas.js';
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -141,37 +142,34 @@ function escapeHtml(str) {
     return (str || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-async function cargarPublicaciones(numero, contenedor) {
-    contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Cargando…</div>';
-    const { data, error } = await supabase
-        .from('publicaciones')
-        .select('*')
-        .eq('parcela_numero', numero)
-        .order('created_at', { ascending: false });
+function ordenarPorFechaDesc(items) {
+    return [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
 
-    if (error) {
-        contenedor.innerHTML = '<div style="font-size:0.55rem;color:#c0392b;">Error al cargar.</div>';
-        return;
-    }
-    if (!data || data.length === 0) {
+function renderPublicaciones(numero, contenedor, items, idsEstaticos) {
+    if (!items || items.length === 0) {
         contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Aún no hay comentarios, fotos ni vídeos.</div>';
         return;
     }
 
-    contenedor.innerHTML = data.map(item => {
+    contenedor.innerHTML = items.map(item => {
         let media = '';
         if (item.archivo_url && item.tipo === 'foto') {
             media = `<div class="publicacion-media"><img src="${item.archivo_url}" onclick="abrirLightbox('${item.archivo_url}','foto')" /></div>`;
         } else if (item.archivo_url && item.tipo === 'video') {
             media = `<div class="publicacion-media"><video src="${item.archivo_url}" onclick="abrirLightbox('${item.archivo_url}','video')" muted></video></div>`;
         }
+        // Las publicaciones incrustadas en el código no se pueden borrar desde la app.
+        const btnBorrar = idsEstaticos.has(item.id)
+            ? ''
+            : `<button class="btn-borrar" data-id="${item.id}" data-path="${item.archivo_path || ''}">🗑️ Eliminar</button>`;
         return `
             <div class="publicacion-item">
                 <div class="publicacion-meta">
                     <span class="autor">${escapeHtml(item.nombre)}</span>
                     <span class="publicacion-meta-derecha">
                         <span>${formatoFecha(item.created_at)}</span>
-                        <button class="btn-borrar" data-id="${item.id}" data-path="${item.archivo_path || ''}">🗑️ Eliminar</button>
+                        ${btnBorrar}
                     </span>
                 </div>
                 ${item.texto ? `<div class="publicacion-texto">${escapeHtml(item.texto)}</div>` : ''}
@@ -187,6 +185,37 @@ async function cargarPublicaciones(numero, contenedor) {
             eliminarPublicacion(numero, id, path, contenedor);
         });
     });
+}
+
+async function cargarPublicaciones(numero, contenedor) {
+    const estaticas = publicacionesEstaticasDeParcela(numero);
+    const idsEstaticos = new Set(estaticas.map(p => p.id));
+
+    // Se muestra primero el snapshot incrustado en el código: no depende de la
+    // base de datos ni de la red. Luego se completa (si hay conexión) con lo
+    // publicado después, sin duplicar lo que ya está incrustado.
+    if (estaticas.length > 0) {
+        renderPublicaciones(numero, contenedor, ordenarPorFechaDesc(estaticas), idsEstaticos);
+    } else {
+        contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Cargando…</div>';
+    }
+
+    const { data, error } = await supabase
+        .from('publicaciones')
+        .select('*')
+        .eq('parcela_numero', numero)
+        .order('created_at', { ascending: false });
+
+    if (error || !data) {
+        if (estaticas.length === 0) {
+            contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Aún no hay comentarios, fotos ni vídeos.</div>';
+        }
+        return;
+    }
+
+    const nuevas = data.filter(item => !idsEstaticos.has(item.id));
+    const combinadas = ordenarPorFechaDesc([...estaticas, ...nuevas]);
+    renderPublicaciones(numero, contenedor, combinadas, idsEstaticos);
 }
 
 async function eliminarPublicacion(numero, id, path, contenedor) {
