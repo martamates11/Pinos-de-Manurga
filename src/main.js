@@ -130,8 +130,41 @@ L.control.layers(
 ).addTo(map);
 L.control.scale({ metric: true, imperial: false }).addTo(map);
 
-let allBounds = null;
 const markers = [];
+
+// =========================================================================
+// Filtro por propietario: por defecto solo se ven las parcelas de José Ángel
+// =========================================================================
+let filtroPropietario = 'José Ángel';
+
+function parcelaVisible(parcela) {
+    return filtroPropietario === 'Todas' || parcela.propietario === filtroPropietario;
+}
+
+function sincronizarVisibilidad(m) {
+    const visible = parcelaVisible(m.parcela);
+    [m.marker, m.etiqueta, m.rectLindero].forEach(capa => {
+        if (!capa) return;
+        const enMapa = map.hasLayer(capa);
+        if (visible && !enMapa) capa.addTo(map);
+        else if (!visible && enMapa) map.removeLayer(capa);
+    });
+}
+
+function calcularBoundsVisibles() {
+    let bounds = null;
+    markers.forEach(m => {
+        if (!m.bounds || !parcelaVisible(m.parcela)) return;
+        if (!bounds) bounds = L.latLngBounds(m.bounds);
+        else bounds.extend(m.bounds);
+    });
+    return bounds;
+}
+
+function ajustarVistaAVisibles() {
+    const bounds = calcularBoundsVisibles();
+    if (bounds) map.fitBounds(bounds, { padding: [40, 40] });
+}
 
 function formatoFecha(iso) {
     const d = new Date(iso);
@@ -321,7 +354,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
         color: '#ffffff',
         weight: 2.5,
         fillOpacity: 0.85
-    }).addTo(map).bindPopup(popupHtml(centerLat, centerLon), {
+    }).bindPopup(popupHtml(centerLat, centerLon), {
         maxWidth: Math.min(window.innerWidth - 24, 520),
         minWidth: Math.min(window.innerWidth - 24, 340),
         maxHeight: Math.round(window.innerHeight * 0.75)
@@ -334,7 +367,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
             iconSize: [24, 18],
             popupAnchor: [0, -8]
         })
-    }).addTo(map);
+    });
 
     numeroEtiqueta.on('click', () => { marker.openPopup(); });
 
@@ -363,11 +396,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
         markerData.center = [lat, lon];
     };
     markers.push(markerData);
-
-    if (bounds) {
-        if (!allBounds) allBounds = L.latLngBounds(bounds);
-        else allBounds.extend(bounds);
-    }
+    sincronizarVisibilidad(markerData);
 }
 
 const parcelasSinCoords = [];
@@ -385,10 +414,10 @@ parcelas.forEach((parcela) => {
     crearMarcadorParcela(parcela, centerLat, centerLon, bounds);
 });
 
-if (allBounds) map.fitBounds(allBounds, { padding: [40, 40] });
+ajustarVistaAVisibles();
 
 document.getElementById('btnVerTodas').addEventListener('click', () => {
-    if (allBounds) map.fitBounds(allBounds, { padding: [40, 40] });
+    ajustarVistaAVisibles();
 });
 
 document.getElementById('btnUsuario').addEventListener('click', pedirNombre);
@@ -400,8 +429,8 @@ function activateParcela(index) {
     map.fitBounds(markerData.bounds, { padding: [50, 50] });
     markerData.marker.openPopup();
     document.querySelectorAll('.dropdown-parcela').forEach(item => item.classList.remove('active'));
-    const items = document.querySelectorAll('.dropdown-parcela');
-    if (items[index]) items[index].classList.add('active');
+    const item = document.querySelector(`.dropdown-parcela[data-index="${index}"]`);
+    if (item) item.classList.add('active');
     dropdownList.classList.remove('open');
     dropdownButton.classList.remove('open');
 }
@@ -410,9 +439,13 @@ const dropdownItemsEl = document.getElementById('dropdownItems');
 
 function actualizarDropdown() {
     dropdownItemsEl.innerHTML = '';
+    let visibles = 0;
     markers.forEach((m, index) => {
+        if (!parcelaVisible(m.parcela)) return;
+        visibles++;
         const item = document.createElement('div');
         item.className = 'dropdown-parcela';
+        item.dataset.index = index;
         const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${m.parcela.color};margin-right:5px;vertical-align:middle;"></span>`;
         item.innerHTML = `
             <div class="dropdown-nombre">${dot}${m.parcela.nombre}</div>
@@ -422,7 +455,7 @@ function actualizarDropdown() {
         item.addEventListener('click', () => { activateParcela(index); });
         dropdownItemsEl.appendChild(item);
     });
-    document.querySelector('.dropdown-button').innerHTML = `📋 Parcelas (${markers.length}) <span class="dropdown-arrow">▼</span>`;
+    document.querySelector('.dropdown-button').innerHTML = `📋 Parcelas (${visibles}) <span class="dropdown-arrow">▼</span>`;
 }
 
 actualizarDropdown();
@@ -442,6 +475,30 @@ document.addEventListener('click', (e) => {
         dropdownButton.classList.remove('open');
     }
 });
+
+// =========================================================================
+// Filtro de propietario dentro de la pestaña "Parcelas"
+// =========================================================================
+const botonesFiltro = document.querySelectorAll('.filtro-propietario');
+
+function actualizarBotonesFiltro() {
+    botonesFiltro.forEach(btn => {
+        btn.classList.toggle('activo', btn.dataset.propietario === filtroPropietario);
+    });
+}
+
+botonesFiltro.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        filtroPropietario = btn.dataset.propietario;
+        actualizarBotonesFiltro();
+        markers.forEach(sincronizarVisibilidad);
+        actualizarDropdown();
+        ajustarVistaAVisibles();
+    });
+});
+
+actualizarBotonesFiltro();
 
 // =========================================================================
 // Herramienta de medición de distancias
@@ -652,7 +709,8 @@ async function cargarPoligonosReales() {
                 fillOpacity: 0,
                 opacity: 0,
                 interactive: false
-            }).addTo(map);
+            });
+            sincronizarVisibilidad(m);
         } catch (e) {
             console.error(`No se pudo obtener el polígono de ${parcela.nombre}`, e);
             fallidas.push(parcela);
@@ -687,16 +745,13 @@ async function cargarPoligonosReales() {
                 fillOpacity: 0,
                 opacity: 0,
                 interactive: false
-            }).addTo(map);
+            });
+            sincronizarVisibilidad(m);
         } catch (e) {
             console.error(`No se pudo obtener el polígono real de la parcela ${m.parcela.nombre}`, e);
             fallidas.push(m.parcela);
         }
     }
-
-    // Recalcular el encuadre general ("Ver todas") con las posiciones ya corregidas por el polígono real
-    allBounds = null;
-    markers.forEach(m => { if (m.bounds) { if (!allBounds) allBounds = L.latLngBounds(m.bounds); else allBounds.extend(m.bounds); } });
 
     const total = markers.length;
     const ok = total - fallidas.length;
