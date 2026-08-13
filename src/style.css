@@ -23,6 +23,14 @@ body { font-family: 'Montserrat', 'Segoe UI', sans-serif; background: #e9edf2; h
 .dropdown-list { position: absolute; top: calc(100% + 5px); right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); width: 300px; max-width: 85vw; max-height: 350px; overflow-y: auto; z-index: 1000; display: none; border: 1px solid rgba(0,0,0,0.08); }
 .dropdown-list.open { display: block; }
 .dropdown-header { padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #eaeef2; font-weight: 600; color: #122b44; position: sticky; top: 0; background: white; font-size: 0.7rem; }
+.dropdown-filtros { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 10px; border-bottom: 1px solid #eaeef2; }
+.filtro-propietario { border: 1.5px solid #d5dce4; background: white; color: #34445a; border-radius: 20px; padding: 4px 10px; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.filtro-propietario:hover { background: #f4f7fb; }
+.filtro-propietario.activo { color: white; border-color: transparent; }
+.filtro-propietario.activo[data-propietario="José Ángel"] { background: #2a5298; }
+.filtro-propietario.activo[data-propietario="Juli"] { background: #e07020; }
+.filtro-propietario.activo[data-propietario="Félix"] { background: #7b2d8b; }
+.filtro-propietario.activo[data-propietario="Todas"] { background: #122b44; }
 .dropdown-items { padding: 5px 8px; }
 .dropdown-parcela { padding: 6px 8px; border-bottom: 1px solid #edf1f5; cursor: pointer; border-radius: 6px; margin-bottom: 2px; }
 .dropdown-parcela:hover { background: #f4f7fb; }
