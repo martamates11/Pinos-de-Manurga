@@ -1,6 +1,5 @@
 import L from 'leaflet';
 import proj4 from 'proj4';
-import { supabase, MEDIA_BUCKET } from './supabaseClient.js';
 import { publicacionesEstaticasDeParcela } from './publicacionesEstaticas.js';
 
 if ('serviceWorker' in navigator) {
@@ -179,7 +178,7 @@ function ordenarPorFechaDesc(items) {
     return [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
-function renderPublicaciones(numero, contenedor, items, idsEstaticos) {
+function renderPublicaciones(contenedor, items) {
     if (!items || items.length === 0) {
         contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Aún no hay comentarios, fotos ni vídeos.</div>';
         return;
@@ -192,122 +191,63 @@ function renderPublicaciones(numero, contenedor, items, idsEstaticos) {
         } else if (item.archivo_url && item.tipo === 'video') {
             media = `<div class="publicacion-media"><video src="${item.archivo_url}" onclick="abrirLightbox('${item.archivo_url}','video')" muted></video></div>`;
         }
-        // Las publicaciones incrustadas en el código no se pueden borrar desde la app.
-        const btnBorrar = idsEstaticos.has(item.id)
-            ? ''
-            : `<button class="btn-borrar" data-id="${item.id}" data-path="${item.archivo_path || ''}">🗑️ Eliminar</button>`;
         return `
             <div class="publicacion-item">
                 <div class="publicacion-meta">
                     <span class="autor">${escapeHtml(item.nombre)}</span>
-                    <span class="publicacion-meta-derecha">
-                        <span>${formatoFecha(item.created_at)}</span>
-                        ${btnBorrar}
-                    </span>
+                    <span>${formatoFecha(item.created_at)}</span>
                 </div>
                 ${item.texto ? `<div class="publicacion-texto">${escapeHtml(item.texto)}</div>` : ''}
                 ${media}
             </div>
         `;
     }).join('');
-
-    contenedor.querySelectorAll('.btn-borrar').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            const path = btn.getAttribute('data-path');
-            eliminarPublicacion(numero, id, path, contenedor);
-        });
-    });
 }
 
-async function cargarPublicaciones(numero, contenedor) {
-    const estaticas = publicacionesEstaticasDeParcela(numero);
-    const idsEstaticos = new Set(estaticas.map(p => p.id));
-
-    // Se muestra primero el snapshot incrustado en el código: no depende de la
-    // base de datos ni de la red. Luego se completa (si hay conexión) con lo
-    // publicado después, sin duplicar lo que ya está incrustado.
-    if (estaticas.length > 0) {
-        renderPublicaciones(numero, contenedor, ordenarPorFechaDesc(estaticas), idsEstaticos);
-    } else {
-        contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Cargando…</div>';
-    }
-
-    const { data, error } = await supabase
-        .from('publicaciones')
-        .select('*')
-        .eq('parcela_numero', numero)
-        .order('created_at', { ascending: false });
-
-    if (error || !data) {
-        if (estaticas.length === 0) {
-            contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Aún no hay comentarios, fotos ni vídeos.</div>';
-        }
-        return;
-    }
-
-    const nuevas = data.filter(item => !idsEstaticos.has(item.id));
-    const combinadas = ordenarPorFechaDesc([...estaticas, ...nuevas]);
-    renderPublicaciones(numero, contenedor, combinadas, idsEstaticos);
+// Las publicaciones están incrustadas en el código: no hay base de datos.
+function cargarPublicaciones(numero, contenedor) {
+    renderPublicaciones(contenedor, ordenarPorFechaDesc(publicacionesEstaticasDeParcela(numero)));
 }
 
-async function eliminarPublicacion(numero, id, path, contenedor) {
-    if (!window.confirm('¿Seguro que quieres eliminar esta publicación?')) return;
-    if (!window.confirm('Esta acción no se puede deshacer. ¿Confirmas que quieres eliminarla definitivamente?')) return;
+// =========================================================================
+// Aviso al guardar: la app ya no guarda nada, se pide enviar una captura
+// =========================================================================
+const avisoEnvio = document.getElementById('avisoEnvio');
+const avisoEnvioResumen = document.getElementById('avisoEnvioResumen');
+let urlVistaPrevia = null;
 
-    try {
-        if (path) {
-            await supabase.storage.from(MEDIA_BUCKET).remove([path]);
-        }
-        const { error } = await supabase.from('publicaciones').delete().eq('id', id);
-        if (error) throw error;
-        await cargarPublicaciones(numero, contenedor);
-    } catch (e) {
-        console.error(e);
-        window.alert('No se ha podido eliminar. Inténtalo de nuevo.');
-    }
+function cerrarAvisoEnvio() {
+    avisoEnvio.classList.remove('open');
+    avisoEnvioResumen.innerHTML = '';
+    if (urlVistaPrevia) { URL.revokeObjectURL(urlVistaPrevia); urlVistaPrevia = null; }
 }
+document.getElementById('avisoEnvioCerrar').addEventListener('click', cerrarAvisoEnvio);
+avisoEnvio.addEventListener('click', (e) => { if (e.target === avisoEnvio) cerrarAvisoEnvio(); });
 
-async function publicar(numero, texto, archivo, contenedorLista, statusEl) {
-    let nombre = getNombreUsuario();
-    if (!nombre) nombre = pedirNombre();
-    if (!nombre) return;
-
+function mostrarAvisoEnvio(parcela, texto, archivo, statusEl) {
     if (!texto && !archivo) {
         statusEl.textContent = 'Escribe un comentario o adjunta un archivo.';
         return;
     }
+    statusEl.textContent = '';
 
-    statusEl.textContent = 'Publicando…';
-
-    let archivo_url = null, archivo_path = null, tipo = 'comentario';
-    try {
-        if (archivo) {
-            tipo = archivo.type.startsWith('video') ? 'video' : 'foto';
-            const path = `${numero}/${Date.now()}_${archivo.name}`;
-            const { error: uploadError } = await supabase.storage.from(MEDIA_BUCKET).upload(path, archivo);
-            if (uploadError) throw uploadError;
-            const { data: pub } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
-            archivo_url = pub.publicUrl;
-            archivo_path = path;
-        }
-
-        const { error: insertError } = await supabase.from('publicaciones').insert({
-            parcela_numero: numero,
-            nombre,
-            tipo,
-            texto: texto || null,
-            archivo_url,
-            archivo_path
-        });
-        if (insertError) throw insertError;
-
-        statusEl.textContent = '';
-        await cargarPublicaciones(numero, contenedorLista);
-    } catch (e) {
-        console.error(e);
-        statusEl.textContent = 'Error al publicar. Inténtalo de nuevo.';
+    // El resumen de lo rellenado aparece dentro del aviso para que salga en la captura.
+    let media = '';
+    if (archivo) {
+        urlVistaPrevia = URL.createObjectURL(archivo);
+        media = archivo.type.startsWith('video')
+            ? `<video src="${urlVistaPrevia}" muted></video>`
+            : `<img src="${urlVistaPrevia}" alt="" />`;
     }
+    const nombre = getNombreUsuario();
+    avisoEnvioResumen.innerHTML = `
+        <div class="aviso-envio-parcela">Parcela Nº ${parcela.numero} · ${parcela.nombre}</div>
+        <div class="aviso-envio-meta">${nombre ? `${escapeHtml(nombre)} · ` : ''}${formatoFecha(new Date().toISOString())}</div>
+        ${texto ? `<div class="aviso-envio-texto">${escapeHtml(texto)}</div>` : ''}
+        ${media ? `<div class="aviso-envio-media">${media}</div>` : ''}
+    `;
+    document.getElementById('avisoEnvioArchivo').style.display = archivo ? 'block' : 'none';
+    avisoEnvio.classList.add('open');
 }
 
 function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
@@ -340,7 +280,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
                 <div class="form-publicar">
                     <textarea id="${textareaId}" rows="2" placeholder="Escribe un comentario…"></textarea>
                     <input type="file" id="${fileId}" accept="image/*,video/*" />
-                    <button class="btn-guardar" id="${btnId}" data-numero="${parcela.numero}">📤 Publicar</button>
+                    <button class="btn-guardar" id="${btnId}" data-numero="${parcela.numero}">💾 Guardar</button>
                     <div id="${statusId}" style="font-size:0.55rem;color:#c0392b;margin-top:4px;"></div>
                 </div>
             </div>
@@ -380,10 +320,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
             const texto = document.getElementById(textareaId).value.trim();
             const archivo = document.getElementById(fileId).files[0];
             const statusEl = document.getElementById(statusId);
-            publicar(parcela.numero, texto, archivo, lista, statusEl).then(() => {
-                document.getElementById(textareaId).value = '';
-                document.getElementById(fileId).value = '';
-            });
+            mostrarAvisoEnvio(parcela, texto, archivo, statusEl);
         });
     });
 

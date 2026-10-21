@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
     "leaflet": "^1.9.4",
     "proj4": "^2.9.0"
   },

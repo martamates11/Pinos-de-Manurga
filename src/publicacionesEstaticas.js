@@ -1,8 +1,6 @@
-// Copia estática de las publicaciones que había en Supabase en el momento de la
-// migración (13/08/2026), para que la app pueda mostrarlas sin depender de la
-// base de datos. Las publicaciones nuevas se siguen guardando y leyendo desde
-// Supabase (ver cargarPublicaciones en main.js), que las combina con esta lista
-// evitando duplicados por "id".
+// Publicaciones de la app, incrustadas en el código (copia de lo que había en
+// Supabase el 13/08/2026). La app ya no usa base de datos: para añadir algo
+// nuevo hay que incorporarlo a esta lista.
 export const publicacionesEstaticas = [
     { id: "35ed78c8-9ca1-4c27-a768-ddf02cb49b4f", parcela_numero: "1", nombre: "Aita", tipo: "foto", texto: null, archivo_url: "/fotos-parcelas/parcela-1-a.jpg", created_at: "2026-06-27T08:37:13.335283+00:00" },
     { id: "0fbed33e-03c2-463b-baf1-f60adffe9563", parcela_numero: "1", nombre: "Marta", tipo: "foto", texto: null, archivo_url: "/fotos-parcelas/parcela-1-b.jpg", created_at: "2026-07-04T09:12:22.772582+00:00" },
