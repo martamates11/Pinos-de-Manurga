@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import proj4 from 'proj4';
-import { supabase, MEDIA_BUCKET } from './supabaseClient.js';
+import { publicacionesEstaticasDeParcela } from './publicacionesEstaticas.js';
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -129,8 +129,41 @@ L.control.layers(
 ).addTo(map);
 L.control.scale({ metric: true, imperial: false }).addTo(map);
 
-let allBounds = null;
 const markers = [];
+
+// =========================================================================
+// Filtro por propietario: por defecto solo se ven las parcelas de José Ángel
+// =========================================================================
+let filtroPropietario = 'José Ángel';
+
+function parcelaVisible(parcela) {
+    return filtroPropietario === 'Todas' || parcela.propietario === filtroPropietario;
+}
+
+function sincronizarVisibilidad(m) {
+    const visible = parcelaVisible(m.parcela);
+    [m.marker, m.etiqueta, m.rectLindero].forEach(capa => {
+        if (!capa) return;
+        const enMapa = map.hasLayer(capa);
+        if (visible && !enMapa) capa.addTo(map);
+        else if (!visible && enMapa) map.removeLayer(capa);
+    });
+}
+
+function calcularBoundsVisibles() {
+    let bounds = null;
+    markers.forEach(m => {
+        if (!m.bounds || !parcelaVisible(m.parcela)) return;
+        if (!bounds) bounds = L.latLngBounds(m.bounds);
+        else bounds.extend(m.bounds);
+    });
+    return bounds;
+}
+
+function ajustarVistaAVisibles() {
+    const bounds = calcularBoundsVisibles();
+    if (bounds) map.fitBounds(bounds, { padding: [40, 40] });
+}
 
 function formatoFecha(iso) {
     const d = new Date(iso);
@@ -141,24 +174,17 @@ function escapeHtml(str) {
     return (str || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-async function cargarPublicaciones(numero, contenedor) {
-    contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Cargando…</div>';
-    const { data, error } = await supabase
-        .from('publicaciones')
-        .select('*')
-        .eq('parcela_numero', numero)
-        .order('created_at', { ascending: false });
+function ordenarPorFechaDesc(items) {
+    return [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
 
-    if (error) {
-        contenedor.innerHTML = '<div style="font-size:0.55rem;color:#c0392b;">Error al cargar.</div>';
-        return;
-    }
-    if (!data || data.length === 0) {
+function renderPublicaciones(contenedor, items) {
+    if (!items || items.length === 0) {
         contenedor.innerHTML = '<div style="font-size:0.55rem;color:#999;">Aún no hay comentarios, fotos ni vídeos.</div>';
         return;
     }
 
-    contenedor.innerHTML = data.map(item => {
+    contenedor.innerHTML = items.map(item => {
         let media = '';
         if (item.archivo_url && item.tipo === 'foto') {
             media = `<div class="publicacion-media"><img src="${item.archivo_url}" onclick="abrirLightbox('${item.archivo_url}','foto')" /></div>`;
@@ -169,83 +195,68 @@ async function cargarPublicaciones(numero, contenedor) {
             <div class="publicacion-item">
                 <div class="publicacion-meta">
                     <span class="autor">${escapeHtml(item.nombre)}</span>
-                    <span class="publicacion-meta-derecha">
-                        <span>${formatoFecha(item.created_at)}</span>
-                        <button class="btn-borrar" data-id="${item.id}" data-path="${item.archivo_path || ''}">🗑️ Eliminar</button>
-                    </span>
+                    <span>${formatoFecha(item.created_at)}</span>
                 </div>
                 ${item.texto ? `<div class="publicacion-texto">${escapeHtml(item.texto)}</div>` : ''}
                 ${media}
             </div>
         `;
     }).join('');
-
-    contenedor.querySelectorAll('.btn-borrar').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            const path = btn.getAttribute('data-path');
-            eliminarPublicacion(numero, id, path, contenedor);
-        });
-    });
 }
 
-async function eliminarPublicacion(numero, id, path, contenedor) {
-    if (!window.confirm('¿Seguro que quieres eliminar esta publicación?')) return;
-    if (!window.confirm('Esta acción no se puede deshacer. ¿Confirmas que quieres eliminarla definitivamente?')) return;
-
-    try {
-        if (path) {
-            await supabase.storage.from(MEDIA_BUCKET).remove([path]);
-        }
-        const { error } = await supabase.from('publicaciones').delete().eq('id', id);
-        if (error) throw error;
-        await cargarPublicaciones(numero, contenedor);
-    } catch (e) {
-        console.error(e);
-        window.alert('No se ha podido eliminar. Inténtalo de nuevo.');
-    }
+// Las publicaciones están incrustadas en el código: no hay base de datos.
+function cargarPublicaciones(numero, contenedor) {
+    renderPublicaciones(contenedor, ordenarPorFechaDesc(publicacionesEstaticasDeParcela(numero)));
 }
 
-async function publicar(numero, texto, archivo, contenedorLista, statusEl) {
-    let nombre = getNombreUsuario();
-    if (!nombre) nombre = pedirNombre();
-    if (!nombre) return;
+// =========================================================================
+// Aviso al guardar: la app ya no guarda nada, se pide enviar una captura
+// =========================================================================
+const avisoEnvio = document.getElementById('avisoEnvio');
+const avisoEnvioResumen = document.getElementById('avisoEnvioResumen');
+const avisoEnvioWhatsapp = document.getElementById('avisoEnvioWhatsapp');
+const WHATSAPP_MARTA = '34629626519';
+let urlVistaPrevia = null;
 
+function cerrarAvisoEnvio() {
+    avisoEnvio.classList.remove('open');
+    avisoEnvioResumen.innerHTML = '';
+    if (urlVistaPrevia) { URL.revokeObjectURL(urlVistaPrevia); urlVistaPrevia = null; }
+}
+document.getElementById('avisoEnvioCerrar').addEventListener('click', cerrarAvisoEnvio);
+avisoEnvio.addEventListener('click', (e) => { if (e.target === avisoEnvio) cerrarAvisoEnvio(); });
+
+function mostrarAvisoEnvio(parcela, texto, archivo, statusEl) {
     if (!texto && !archivo) {
         statusEl.textContent = 'Escribe un comentario o adjunta un archivo.';
         return;
     }
+    statusEl.textContent = '';
 
-    statusEl.textContent = 'Publicando…';
-
-    let archivo_url = null, archivo_path = null, tipo = 'comentario';
-    try {
-        if (archivo) {
-            tipo = archivo.type.startsWith('video') ? 'video' : 'foto';
-            const path = `${numero}/${Date.now()}_${archivo.name}`;
-            const { error: uploadError } = await supabase.storage.from(MEDIA_BUCKET).upload(path, archivo);
-            if (uploadError) throw uploadError;
-            const { data: pub } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
-            archivo_url = pub.publicUrl;
-            archivo_path = path;
-        }
-
-        const { error: insertError } = await supabase.from('publicaciones').insert({
-            parcela_numero: numero,
-            nombre,
-            tipo,
-            texto: texto || null,
-            archivo_url,
-            archivo_path
-        });
-        if (insertError) throw insertError;
-
-        statusEl.textContent = '';
-        await cargarPublicaciones(numero, contenedorLista);
-    } catch (e) {
-        console.error(e);
-        statusEl.textContent = 'Error al publicar. Inténtalo de nuevo.';
+    // El resumen de lo rellenado aparece dentro del aviso para que salga en la captura.
+    let media = '';
+    if (archivo) {
+        urlVistaPrevia = URL.createObjectURL(archivo);
+        media = archivo.type.startsWith('video')
+            ? `<video src="${urlVistaPrevia}" muted></video>`
+            : `<img src="${urlVistaPrevia}" alt="" />`;
     }
+    const nombre = getNombreUsuario();
+    avisoEnvioResumen.innerHTML = `
+        <div class="aviso-envio-parcela">Parcela Nº ${parcela.numero} · ${parcela.nombre}</div>
+        <div class="aviso-envio-meta">${nombre ? `${escapeHtml(nombre)} · ` : ''}${formatoFecha(new Date().toISOString())}</div>
+        ${texto ? `<div class="aviso-envio-texto">${escapeHtml(texto)}</div>` : ''}
+        ${media ? `<div class="aviso-envio-media">${media}</div>` : ''}
+    `;
+    const mensaje = [
+        `Parcela Nº ${parcela.numero} · ${parcela.nombre}`,
+        nombre ? `De: ${nombre}` : '',
+        texto,
+        archivo ? '(Te envío también la foto/vídeo)' : ''
+    ].filter(Boolean).join('\n');
+    avisoEnvioWhatsapp.href = `https://wa.me/${WHATSAPP_MARTA}?text=${encodeURIComponent(mensaje)}`;
+    document.getElementById('avisoEnvioArchivo').style.display = archivo ? 'block' : 'none';
+    avisoEnvio.classList.add('open');
 }
 
 function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
@@ -278,7 +289,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
                 <div class="form-publicar">
                     <textarea id="${textareaId}" rows="2" placeholder="Escribe un comentario…"></textarea>
                     <input type="file" id="${fileId}" accept="image/*,video/*" />
-                    <button class="btn-guardar" id="${btnId}" data-numero="${parcela.numero}">📤 Publicar</button>
+                    <button class="btn-guardar" id="${btnId}" data-numero="${parcela.numero}">💾 Guardar</button>
                     <div id="${statusId}" style="font-size:0.55rem;color:#c0392b;margin-top:4px;"></div>
                 </div>
             </div>
@@ -292,7 +303,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
         color: '#ffffff',
         weight: 2.5,
         fillOpacity: 0.85
-    }).addTo(map).bindPopup(popupHtml(centerLat, centerLon), {
+    }).bindPopup(popupHtml(centerLat, centerLon), {
         maxWidth: Math.min(window.innerWidth - 24, 520),
         minWidth: Math.min(window.innerWidth - 24, 340),
         maxHeight: Math.round(window.innerHeight * 0.75)
@@ -305,7 +316,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
             iconSize: [24, 18],
             popupAnchor: [0, -8]
         })
-    }).addTo(map);
+    });
 
     numeroEtiqueta.on('click', () => { marker.openPopup(); });
 
@@ -318,10 +329,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
             const texto = document.getElementById(textareaId).value.trim();
             const archivo = document.getElementById(fileId).files[0];
             const statusEl = document.getElementById(statusId);
-            publicar(parcela.numero, texto, archivo, lista, statusEl).then(() => {
-                document.getElementById(textareaId).value = '';
-                document.getElementById(fileId).value = '';
-            });
+            mostrarAvisoEnvio(parcela, texto, archivo, statusEl);
         });
     });
 
@@ -334,11 +342,7 @@ function crearMarcadorParcela(parcela, centerLat, centerLon, bounds) {
         markerData.center = [lat, lon];
     };
     markers.push(markerData);
-
-    if (bounds) {
-        if (!allBounds) allBounds = L.latLngBounds(bounds);
-        else allBounds.extend(bounds);
-    }
+    sincronizarVisibilidad(markerData);
 }
 
 const parcelasSinCoords = [];
@@ -356,10 +360,10 @@ parcelas.forEach((parcela) => {
     crearMarcadorParcela(parcela, centerLat, centerLon, bounds);
 });
 
-if (allBounds) map.fitBounds(allBounds, { padding: [40, 40] });
+ajustarVistaAVisibles();
 
 document.getElementById('btnVerTodas').addEventListener('click', () => {
-    if (allBounds) map.fitBounds(allBounds, { padding: [40, 40] });
+    ajustarVistaAVisibles();
 });
 
 document.getElementById('btnUsuario').addEventListener('click', pedirNombre);
@@ -371,8 +375,8 @@ function activateParcela(index) {
     map.fitBounds(markerData.bounds, { padding: [50, 50] });
     markerData.marker.openPopup();
     document.querySelectorAll('.dropdown-parcela').forEach(item => item.classList.remove('active'));
-    const items = document.querySelectorAll('.dropdown-parcela');
-    if (items[index]) items[index].classList.add('active');
+    const item = document.querySelector(`.dropdown-parcela[data-index="${index}"]`);
+    if (item) item.classList.add('active');
     dropdownList.classList.remove('open');
     dropdownButton.classList.remove('open');
 }
@@ -381,9 +385,13 @@ const dropdownItemsEl = document.getElementById('dropdownItems');
 
 function actualizarDropdown() {
     dropdownItemsEl.innerHTML = '';
+    let visibles = 0;
     markers.forEach((m, index) => {
+        if (!parcelaVisible(m.parcela)) return;
+        visibles++;
         const item = document.createElement('div');
         item.className = 'dropdown-parcela';
+        item.dataset.index = index;
         const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${m.parcela.color};margin-right:5px;vertical-align:middle;"></span>`;
         item.innerHTML = `
             <div class="dropdown-nombre">${dot}${m.parcela.nombre}</div>
@@ -393,7 +401,7 @@ function actualizarDropdown() {
         item.addEventListener('click', () => { activateParcela(index); });
         dropdownItemsEl.appendChild(item);
     });
-    document.querySelector('.dropdown-button').innerHTML = `📋 Parcelas (${markers.length}) <span class="dropdown-arrow">▼</span>`;
+    document.querySelector('.dropdown-button').innerHTML = `📋 Parcelas (${visibles}) <span class="dropdown-arrow">▼</span>`;
 }
 
 actualizarDropdown();
@@ -413,6 +421,30 @@ document.addEventListener('click', (e) => {
         dropdownButton.classList.remove('open');
     }
 });
+
+// =========================================================================
+// Filtro de propietario dentro de la pestaña "Parcelas"
+// =========================================================================
+const botonesFiltro = document.querySelectorAll('.filtro-propietario');
+
+function actualizarBotonesFiltro() {
+    botonesFiltro.forEach(btn => {
+        btn.classList.toggle('activo', btn.dataset.propietario === filtroPropietario);
+    });
+}
+
+botonesFiltro.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        filtroPropietario = btn.dataset.propietario;
+        actualizarBotonesFiltro();
+        markers.forEach(sincronizarVisibilidad);
+        actualizarDropdown();
+        ajustarVistaAVisibles();
+    });
+});
+
+actualizarBotonesFiltro();
 
 // =========================================================================
 // Herramienta de medición de distancias
@@ -623,7 +655,8 @@ async function cargarPoligonosReales() {
                 fillOpacity: 0,
                 opacity: 0,
                 interactive: false
-            }).addTo(map);
+            });
+            sincronizarVisibilidad(m);
         } catch (e) {
             console.error(`No se pudo obtener el polígono de ${parcela.nombre}`, e);
             fallidas.push(parcela);
@@ -658,16 +691,13 @@ async function cargarPoligonosReales() {
                 fillOpacity: 0,
                 opacity: 0,
                 interactive: false
-            }).addTo(map);
+            });
+            sincronizarVisibilidad(m);
         } catch (e) {
             console.error(`No se pudo obtener el polígono real de la parcela ${m.parcela.nombre}`, e);
             fallidas.push(m.parcela);
         }
     }
-
-    // Recalcular el encuadre general ("Ver todas") con las posiciones ya corregidas por el polígono real
-    allBounds = null;
-    markers.forEach(m => { if (m.bounds) { if (!allBounds) allBounds = L.latLngBounds(m.bounds); else allBounds.extend(m.bounds); } });
 
     const total = markers.length;
     const ok = total - fallidas.length;

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'pinos-cache-v2';
+const CACHE_VERSION = 'pinos-cache-v3';
 
 self.addEventListener('install', () => {
     self.skipWaiting();
@@ -12,13 +12,9 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-function esApiSupabase(url) {
-    return url.includes('supabase.co');
-}
-
 self.addEventListener('fetch', (event) => {
     const { request } = event;
-    if (request.method !== 'GET' || esApiSupabase(request.url)) return;
+    if (request.method !== 'GET') return;
 
     event.respondWith(
         caches.open(CACHE_VERSION).then(async (cache) => {

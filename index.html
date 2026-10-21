@@ -27,6 +27,13 @@
                     <div class="dropdown-menu">
                         <button class="dropdown-button" id="dropdownButton">📋 Parcelas <span class="dropdown-arrow">▼</span></button>
                         <div class="dropdown-list" id="dropdownList">
+                            <div class="dropdown-header">Propietario</div>
+                            <div class="dropdown-filtros" id="dropdownFiltros">
+                                <button class="filtro-propietario activo" data-propietario="José Ángel">José Ángel</button>
+                                <button class="filtro-propietario" data-propietario="Juli">Juli</button>
+                                <button class="filtro-propietario" data-propietario="Félix">Félix</button>
+                                <button class="filtro-propietario" data-propietario="Todas">Todas</button>
+                            </div>
                             <div class="dropdown-header">Selecciona una parcela</div>
                             <div class="dropdown-items" id="dropdownItems"></div>
                         </div>
@@ -42,6 +49,20 @@
 <div id="lightbox" class="lightbox">
     <button class="lightbox-close" id="lightboxClose">✕</button>
     <div class="lightbox-content" id="lightboxContent"></div>
+</div>
+
+<div id="avisoEnvio" class="aviso-envio" role="dialog" aria-modal="true" aria-labelledby="avisoEnvioTitulo">
+    <div class="aviso-envio-caja">
+        <div class="aviso-envio-icono">📸</div>
+        <h2 id="avisoEnvioTitulo">Haz una captura de pantalla</h2>
+        <p>La app ya no guarda comentarios, fotos ni vídeos. Haz una captura de esta pantalla y <strong>envíasela a Marta por WhatsApp</strong>.</p>
+        <p id="avisoEnvioArchivo" class="aviso-envio-nota">Si es una foto o un vídeo, envíalo también por WhatsApp para que llegue con buena calidad.</p>
+        <div id="avisoEnvioResumen" class="aviso-envio-resumen"></div>
+        <div class="aviso-envio-botones">
+            <a id="avisoEnvioWhatsapp" class="aviso-envio-whatsapp" href="#" target="_blank" rel="noopener">Abrir WhatsApp con Marta</a>
+            <button id="avisoEnvioCerrar" class="aviso-envio-cerrar">Entendido</button>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="/src/main.js"></script>
