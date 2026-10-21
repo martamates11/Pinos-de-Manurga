@@ -214,6 +214,8 @@ function cargarPublicaciones(numero, contenedor) {
 // =========================================================================
 const avisoEnvio = document.getElementById('avisoEnvio');
 const avisoEnvioResumen = document.getElementById('avisoEnvioResumen');
+const avisoEnvioWhatsapp = document.getElementById('avisoEnvioWhatsapp');
+const WHATSAPP_MARTA = '34629626519';
 let urlVistaPrevia = null;
 
 function cerrarAvisoEnvio() {
@@ -246,6 +248,13 @@ function mostrarAvisoEnvio(parcela, texto, archivo, statusEl) {
         ${texto ? `<div class="aviso-envio-texto">${escapeHtml(texto)}</div>` : ''}
         ${media ? `<div class="aviso-envio-media">${media}</div>` : ''}
     `;
+    const mensaje = [
+        `Parcela Nº ${parcela.numero} · ${parcela.nombre}`,
+        nombre ? `De: ${nombre}` : '',
+        texto,
+        archivo ? '(Te envío también la foto/vídeo)' : ''
+    ].filter(Boolean).join('\n');
+    avisoEnvioWhatsapp.href = `https://wa.me/${WHATSAPP_MARTA}?text=${encodeURIComponent(mensaje)}`;
     document.getElementById('avisoEnvioArchivo').style.display = archivo ? 'block' : 'none';
     avisoEnvio.classList.add('open');
 }

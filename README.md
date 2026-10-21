@@ -18,7 +18,7 @@ npm run dev
 3. Despliega. Al ser un sitio estático servido por su CDN, está siempre disponible.
 
 ## Añadir publicaciones
-La app ya no guarda nada. Si alguien rellena un comentario o adjunta una foto/vídeo y pulsa **Guardar**, aparece un aviso pidiéndole que haga una captura de pantalla y se la envíe a Marta por WhatsApp. Para incorporar una publicación nueva:
+La app ya no guarda nada. Si alguien rellena un comentario o adjunta una foto/vídeo y pulsa **Guardar**, aparece un aviso pidiéndole que haga una captura de pantalla y se la envíe a Marta por WhatsApp. El aviso incluye un botón que abre un chat con Marta con el texto ya escrito. Para incorporar una publicación nueva:
 1. Si tiene foto o vídeo, copia el archivo a `public/fotos-parcelas/`.
 2. Añade una entrada a la lista de `src/publicacionesEstaticas.js` con `id` único, `parcela_numero`, `nombre`, `tipo` (comentario/foto/video), `texto`, `archivo_url` y `created_at`.
 
